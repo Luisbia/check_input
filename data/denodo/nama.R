@@ -10,7 +10,7 @@ vdp_con <- dbConnect(odbc(), "DenodoODBC")
 sql_nama <- " SELECT * FROM hv_fame_nama4regacc "
 df_nama <- dbGetQuery(vdp_con, sql_nama)
 dbDisconnect(vdp_con)
-fwrite(df_nama,"data/denodo/nama_orig.csv")
+#fwrite(df_nama,"data/denodo/nama_orig.csv")
 
 df_nama <- df_nama %>%
   as.data.table

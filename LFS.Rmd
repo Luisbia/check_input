@@ -1,0 +1,118 @@
+---
+title: "Regional Accounts checks - Employment in LFS"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document: 
+    fig_width: 12
+    fig_height: 9
+params:
+  report: DE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r country, include=FALSE}
+country_sel <- params$report
+```
+
+```{r load_packages, include=FALSE}
+# Packages needed
+library(tidyverse)
+library(scales)
+library(plotly)
+library(rio)
+library(data.table)
+```
+
+```{r, eval = FALSE}
+
+library(eurostat)
+emp_lfs<-get_eurostat("lfst_r_lfe2en2", time_format="num") %>% 
+  filter ( sex =="T" &
+           age=="Y_GE15" &
+             nace_r2 == "TOTAL") %>% 
+  select(-sex, -age, - nace_r2, -unit) %>% 
+  rename(lfs = values)
+saveRDS(emp_lfs, "data/eurobase/emp_lfs.rds")
+```
+
+
+```{r}
+source("utils/palette.R")
+source("utils/theme_report.R")
+
+emp_regacc <-list.files(path="data/denodo",
+                pattern= glob2rx(paste0("*",country_sel,"*")),
+                full.names=TRUE) %>% 
+  as_tibble() %>% 
+  mutate(date=map(value,file.mtime)) %>% 
+  unnest(date) %>% 
+  arrange(desc(date)) %>% 
+  head(1) %>% 
+  select(value) %>% 
+  pull() %>% 
+  fread() %>% 
+  mutate(NUTS=as.factor(NUTS)) %>% 
+  filter(table_identifier=="T1001" & sto=="EMP" & type=="T") %>% 
+  select(ref_area,NUTS,time_period,obs_value) %>% 
+  rename(regacc=obs_value) %>% 
+  as.data.table()
+
+emp_lfs <- readRDS("data/eurobase/emp_lfs.rds") %>% 
+  rename(ref_area=geo,
+         time_period=time)
+
+df <- left_join(emp_regacc, emp_lfs) %>% 
+  na.omit() %>% 
+  pivot_longer(cols = c (regacc, lfs),
+               names_to ="series",
+               values_to = "values")
+ 
+NUTS2021 <- NUTS_2021 %>% 
+  filter (country %in% country_sel) %>% #NUTS
+  mutate(NUTS=as.factor(NUTS)) %>% 
+  droplevels()
+
+df <- left_join(df, NUTS2021) %>% 
+  filter(NUTS %in% c ("0", "2")) %>% 
+  mutate(time_period=as.integer(time_period))
+
+```
+
+
+```{r}
+p <- ggplot(df, aes(time_period, values, colour = series, label = label))+
+  geom_line(size = 0.7)+
+  facet_wrap(~ref_area, scales="free_y")+
+  theme_regacc_line+
+  scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(accuracy =1))+
+  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1))+
+    scale_colour_luis()
+
+ggplotly(p)%>% config(displayModeBar = F)
+  
+```
+
+```{r,eval = TRUE}
+df_plots <-  df %>% 
+  group_by(ref_area) %>% 
+  nest() 
+
+df_plots <- df_plots %>% 
+  mutate(plot = map2(data, ref_area, ~ ggplot(data = .x, aes(x = time_period, y = values,colour = series)) +
+                       ggtitle(paste0("Geo:", .y)) +
+                       geom_line(size = 0.7)+
+                       theme_regacc_line+
+                      scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
+                     scale_y_continuous( breaks = breaks_pretty(4), labels = label_number())+
+                      scale_colour_luis() ))
+
+walk(df_plots$plot,print)
+```
+

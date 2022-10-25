@@ -1,0 +1,162 @@
+---
+title: "Basic info 2021 production"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: "Unit C2"
+output:
+  html_document: 
+    code_download: true
+    toc: yes
+    toc_float: yes
+    theme: cerulean
+params:
+  report: AL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r country, include=FALSE}
+# country sel is specified in the UI script and taken from there
+country_sel <- params$report
+```
+
+```{r}
+library(tidyverse)
+library(data.table)
+library(luispack)
+```
+
+
+```{r}
+df <- luispack::load_xml(folder =  "data/xml",
+                         country_sel = country_sel,
+                         consolidate = FALSE) %>%
+  arrange(date) %>% 
+  group_by(across(c(table_identifier,ref_area,sto,accounting_entry,activity,unit_measure,time_period))) %>% 
+  slice_tail(n=1) %>% 
+  ungroup()
+
+
+```
+
+
+
+```{r}
+transmissions<- unique(df[,.(date,country,table)])%>%
+  .[, received := str_sub(modification_time,1,10)] %>% 
+  .[, modification_time := NULL] %>% 
+  droplevels() %>% 
+  na.omit()
+```
+
+
+
+```{r}
+
+tables<- unique(df[!obs_status %in% c("L","M") ,.(first = min(time), last = max(time)),by =.(modification_time,table,country,na_item)])%>% 
+  droplevels()
+```
+
+
+
+```{r}
+embargo<- na.omit(unique(df[,.(table,country,embargo_date)])) %>% 
+  droplevels()
+```
+
+
+
+```{r}
+prep_dset<-na.omit(unique(df[,.(country,comment_dset)])) %>% 
+  droplevels()
+```
+
+
+```{r}
+comments_obs<-na.omit(unique(df[comment_ts!="xxx" & comment_ts!="",.(country,table,comment_ts)])) %>% 
+  droplevels()
+```
+
+
+
+```{r}
+not_pub<-na.omit(unique(df[conf_status=="N",.(country,table,na_item,conf_status)]))%>% 
+  droplevels() 
+```
+
+
+
+```{r}
+pub_flag<-na.omit(unique(df[obs_status %in% c("E","P","B","D","U"),.(country,na_item,obs_status,time)])) %>% 
+  droplevels()
+```
+
+# Select country
+
+```{r}
+shared_transmissions <- SharedData$new(transmissions, key = ~country, group = "shared_obj")
+shared_tables <- SharedData$new(tables, key = ~country, group = "shared_obj")
+shared_embargo <- SharedData$new(embargo, key = ~country, group = "shared_obj")
+shared_prep_dset <- SharedData$new(prep_dset, key = ~country, group = "shared_obj")
+shared_comments_obs <- SharedData$new(comments_obs, key = ~country, group = "shared_obj")
+shared_not_pub <- SharedData$new(not_pub, key = ~country, group = "shared_obj")
+shared_pub_flag <- SharedData$new(pub_flag, key = ~country, group = "shared_obj")
+
+
+filter_select(
+  id = "id-selector", label = "Country:", 
+  sharedData = shared_transmissions, group = ~country
+)
+```
+
+### Files received
+
+```{r}
+show_table(shared_transmissions)
+```
+
+
+### Reporting period included
+
+```{r}
+show_table(shared_tables)
+```
+
+### Embargo dates
+
+```{r}
+show_table(shared_embargo)
+```
+
+### Comments Dataset
+
+```{r}
+show_table(shared_prep_dset)
+```
+
+
+### Comments observations
+
+```{r}
+show_table(shared_comments_obs)
+```
+
+
+### Not publishable data
+
+```{r}
+show_table(shared_not_pub)
+```
+
+### Publication flags
+
+```{r}
+show_table(shared_pub_flag)
+```
+
+

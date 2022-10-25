@@ -1,0 +1,126 @@
+---
+title: "Regional Accounts checks - Population in Demography"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document: 
+    fig_width: 12
+    fig_height: 9
+params:
+  report: DE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r country, include=FALSE}
+country_sel <- params$report
+```
+
+```{r load_packages, include=FALSE}
+# Packages needed
+library(tidyverse)
+library(scales)
+library(plotly)
+library(rio)
+library(data.table)
+```
+
+```{r, eval = FALSE}
+library(eurostat)
+pop_dem<-get_eurostat("demo_r_pjangroup", time_format="num") %>% 
+  filter ( sex =="T" & age =="TOTAL") %>% 
+  select(-sex,  -age, -unit) %>% 
+  group_by(geo) %>% 
+  arrange(time,.by_group=TRUE) %>% 
+  mutate(dem= round((values+lead(values))/2000,1)) %>% 
+  select(-values) %>% 
+  ungroup()
+saveRDS(pop_dem, "data/eurobase/pop.rds")
+```
+
+
+```{r}
+source("utils/palette.R")
+source("utils/theme_report.R")
+
+pop_regacc <- list.files(path="data/denodo",
+                pattern= glob2rx(paste0("*",country_sel,"*")),
+                full.names=TRUE) %>% 
+  as_tibble() %>% 
+  mutate(date=map(value,file.mtime)) %>% 
+  unnest(date) %>% 
+  arrange(desc(date)) %>% 
+  head(1) %>% 
+  select(value) %>% 
+  pull() %>% 
+  fread() %>% 
+  mutate(NUTS=as.factor(NUTS)) %>% 
+  filter(sto=="POP" & type=="T") %>% 
+  select(table_identifier,ref_area,NUTS,time_period,obs_value) %>%
+   pivot_wider(names_from = table_identifier,
+              values_from = obs_value) %>% 
+  mutate(T1001 = coalesce(T1001,T1200)) %>% 
+          select(ref_area, time_period, T1001) %>% 
+  rename (regacc = T1001) %>% 
+  as.data.table()
+  
+
+pop_dem <- readRDS("data/eurobase/pop.rds") %>% 
+  rename(ref_area=geo,
+         time_period=time)
+
+df <- left_join(pop_regacc, pop_dem) %>% 
+  na.omit() %>% 
+  mutate(reg_dem= round((regacc-dem)*100/dem,1),
+         time_period=as.integer(time_period))
+  
+ 
+NUTS2021 <- NUTS_2021 %>% 
+  filter (country %in% country_sel) %>% #NUTS
+   mutate(NUTS=as.factor(NUTS)) %>% 
+  droplevels()
+
+df <- left_join(df, NUTS2021)
+
+```
+
+
+```{r}
+p <- ggplot(df, aes(time_period, reg_dem, colour= ref_area, label = label))+
+  geom_line(size = 0.7)+
+  facet_wrap(~NUTS, scales="free_y")+
+  theme_regacc_line+
+  scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(accuracy = 1))+
+  scale_colour_luis()
+
+ggplotly(p)%>% config(displayModeBar = F)
+  
+```
+
+```{r,eval = TRUE}
+df_plots <-  df %>% 
+  select( -reg_dem) %>% 
+    pivot_longer(cols = c("regacc","dem"),
+                 names_to="series",
+                 values_to = "values") %>% 
+  group_by(ref_area) %>% 
+  nest() 
+
+df_plots <- df_plots %>% 
+  mutate(plot = map2(data, ref_area, ~ ggplot(data = .x, aes(x = time_period, y = values, colour= series)) +
+                       geom_line(size = 0.9)+
+                       theme_regacc_line+
+  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
+  scale_y_continuous( breaks = breaks_pretty(4), labels = label_number())+
+  scale_colour_luis()+
+    ggtitle(paste0("Geo:", .y)) 
+                       ))
+
+walk(df_plots$plot,print)
+```
+

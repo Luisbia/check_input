@@ -1,0 +1,609 @@
+---
+title: "Regional Accounts checks"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: "Unit C2"
+output:
+  html_document: 
+    code_download: true
+    toc: yes
+    toc_float: yes
+    fig_width:  10
+    fig_height: 7
+    theme: cerulean
+params:
+  report: SI
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r country, include=FALSE}
+# country sel is specified in the UI script and taken from there
+country_sel <- params$report
+```
+
+```{r load_packages, include=FALSE}
+# Packages needed
+library(rio)
+library(tidyverse)
+library(plotly)
+library(DT)
+library(scales)
+library(knitr)
+library(data.table)
+library(luispack)
+
+options(dplyr.summarise.inform = FALSE)
+```
+
+
+```{r data}
+# load the data that includes T and V
+files<-list.files(path="data/denodo",
+           pattern= glob2rx(paste0("*",country_sel,"*")),
+           full.names=TRUE) %>% 
+  as_tibble() %>% 
+  mutate(date=map(value,file.mtime)) %>% 
+  unnest(date) %>% 
+  arrange(desc(date)) %>% 
+  head(1) %>% 
+  select(value) %>% 
+  pull() %>% 
+ fread() %>%
+.[,NUTS:=as.factor(NUTS)] 
+
+# load the NUTS for the country  
+NUTS2021<-luispack::NUTS_2021 %>% 
+  filter(country %in% country_sel) %>% 
+  mutate(across(c(NUTS,label),as_factor)) %>% 
+  mutate(country=as.character(country)) %>% 
+  as.data.table()
+
+# load the nama data
+nama <- fread("data/denodo/nama.csv") %>% 
+# change column name
+  setnames("obs_value","nama")
+# load the nfsa data
+nfsa <- fread("data/denodo/nfsa.csv") %>% 
+# change column name
+  setnames("obs_value","nfsa")
+```
+
+
+```{r, aux_scripts}
+# calculating completeness
+source("utils/completeness.R")
+# plot functions
+source("utils/plot_report.R")
+# custom theme
+source("utils/theme_report.R")
+```
+
+
+```{r, out.width="20%",fig.align='right'}
+# logo for the report
+knitr::include_graphics("eurostat_logo.svg")
+```
+
+## Metadata
+
+```{r known_issues}
+# load issues found in previous transmissions + useful things to know
+rio::import(paste0("metadata/",country_sel,"_reg_metadata.xlsx"),
+            sheet="metadata") %>% 
+luispack::show_DT()
+```
+
+
+## Completeness 
+
+### As in NQR
+
+```{r NQR}
+# Theoretical tables
+
+completeness<- function (input) {
+  
+  temp <- files %>% 
+    filter(type=="T") %>% # filter only T
+    left_join(input,.) # join with the respective theoretical table
+  
+  inc<- temp %>% 
+  group_by(country) %>% # group by country
+  summarise(reported=sum(!is.na(obs_value))) %>% # check how many are empty
+  pull(reported) # extract as value
+  
+  tot<-temp %>% 
+  group_by(country) %>% 
+  summarise(total=n()) %>% 
+    pull(total) # count all
+  
+  temp<-round(inc*100/tot,2) #calculate the ratio
+  return (temp)
+   }
+
+t1001c<-completeness (t1001)
+t1002c<-completeness (t1002)
+t1200c<-completeness (t1200)
+t1300c<-completeness (t1300)
+
+coverage<- tibble("t1001"=t1001c,"t1002"=t1002c,"t1200"=t1200c,"t1300"=t1300c)
+ 
+kable(coverage)
+```
+
+### Table 1001
+
+
+```{r chart01}
+t1001<- left_join(files, NUTS2021) %>% # join with the NUTS
+  filter(table_identifier == "T1001" &
+           type =="T" &
+         sto %in% c("B1G","EMP","POP") &
+          activity %in% c("_T", "_Z") &
+           label != "Extra-regio" &
+           !unit_measure %in% c("PC", "HW") &
+           NUTS =="2") %>%
+  mutate(ref_area=paste0(ref_area,"-",label)) %>% # create a new label
+  group_by(ref_area,sto, unit_measure, activity, accounting_entry) %>% 
+  arrange(time_period,.by_group = TRUE) %>% 
+  mutate(change=round(obs_value/lag(obs_value)*100-100,1)) %>% 
+  ungroup() %>% 
+  na.omit()
+
+# Heatmap 1001 ----
+#we use a function from utilities/plot_report.R
+# it has two arguments the sto and the title
+plot_heatmap_t1001("B1G","Value Added NUTS 2")
+plot_heatmap_t1001("EMP","Employment NUTS 2")
+plot_heatmap_t1001("POP","Population NUTS 2")
+
+```
+
+```{r chart02}
+ temp<- left_join(files, NUTS2021) %>% 
+  filter(table_identifier == "T1001" &
+           type =="T" &
+           NUTS == "2" &
+         activity %in% c("_T", "_Z") &
+           label != "Extra-regio" &
+           unit_measure =="PC" &
+           label!= "Extra-regio")  %>%
+  mutate(ref_area=paste0(ref_area,"-",label)) %>%
+  select(time_period, ref_area, obs_value) %>% 
+  na.omit()
+  
+
+
+ggplotly(ggplot(temp,aes(time_period, fct_rev(ref_area), fill = obs_value)) +
+  geom_tile() +
+  theme_regacc_heatmap +
+     theme(axis.text.x = element_text(size =9,angle = 90))+
+ scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
+  scale_x_continuous(breaks=c(min(temp$time_period),max(temp$time_period)), labels = label_number(accuracy = 1),expand=c(0,0))+
+   ggtitle("Gross Value Added Volume"))
+
+```
+
+### Table 1200
+
+```{r chart03}
+
+t1200 <- left_join(files,NUTS2021) %>% 
+  filter(type =="T" &
+           label!="Extra-regio" &
+          unit_measure %in% c("PS", "XDC") &
+          sto %in% c ("B1G","EMP","SAL","POP")) %>% 
+    mutate(ref_area=paste0(ref_area,"-",label))
+
+plot_heatmap_t1200("B1G","2","Value Added NUTS 2")
+plot_heatmap_t1200("B1G","3","Value Added NUTS 3")
+plot_heatmap_t1200("EMP","2","Employment (PS) NUTS 2")
+plot_heatmap_t1200("EMP","3","Employment (PS) NUTS 3")
+plot_heatmap_t1200("POP","3","Population NUTS 3")
+
+```
+
+###  Table 1002
+
+```{r 04 T1002}
+
+t1002 <- left_join(NUTS2021,files) %>% 
+  filter(type =="T" & 
+         sto %in% c("D1", "P51G","EMP","SAL") &
+         unit_measure %in% c("XDC", "HW") &
+         activity !="_Z" &
+         label != "Extra-regio")
+  
+
+
+plot_heatmap_t1002("D1","Compensation of Employees")
+plot_heatmap_t1002("P51G","Gross Fixed Capital Formation")
+plot_heatmap_t1002("EMP",  "Employment (HW)")
+plot_heatmap_t1002("SAL",  "Employees (HW)")
+
+```
+
+
+### Table 1300
+
+```{r 05 T1300}
+
+t1300 <- left_join(NUTS2021,files) %>% 
+  filter(type =="T" &
+           activity =="_Z" &
+         unit_measure =="XDC") %>% 
+  unite("sto",c(accounting_entry,sto))
+
+  if (nrow(t1300) > 0){ # not needed now but maybe useful for future developments
+plot_heatmap_t1300("Household Accounts")
+  }
+```
+
+##  External consistency
+
+### NAMA
+
+```{r 06 nama}
+ temp <- files %>%
+  filter(NUTS =="0" & 
+         type=="T") %>% 
+  select(-NUTS) %>% 
+  left_join(.,nama) %>% 
+  na.omit() %>% 
+  mutate(diff=round(obs_value-nama,1))
+
+temp1<- temp %>% 
+  filter(unit_measure =="PC") %>% 
+  filter(abs(diff)>0.1)
+ 
+temp2 <- temp %>% 
+  filter(unit_measure %in% c("XDC", "PS")) %>% 
+  filter(abs(diff)>2)
+
+temp3 <- temp %>% 
+  filter(unit_measure == "HW") %>% 
+  filter(abs(diff)>100)
+
+temp<- bind_rows(temp1,temp2,temp3) %>% 
+  mutate(across(where(is.character),as.factor))
+
+# exceptions we know. For Poland for B1G,D1 and P51G we only check the total NACE
+if ("PL" %in% files$country) {
+  temp1<- temp %>%
+  filter(activity  %in% c ("_T") & sto %in% c("B1G","D1", "P51G"))
+
+  temp2 <- temp %>%
+    filter (!sto %in% c("B1G", "D1", "P51G"))
+
+  temp<- bind_rows (temp1,temp2)
+  rm(temp1,temp2)
+}
+
+  if (nrow(temp) > 0)
+luispack::show_DT(temp) 
+
+
+```
+
+### NFSA
+
+```{r nfsa}
+temp <- files %>%
+  filter(NUTS =="0" & type =="T") %>% 
+  select(-NUTS) %>% 
+  left_join(.,nfsa) %>% 
+  na.omit() %>% 
+  mutate(diff=round(obs_value-nfsa,1))%>% 
+  filter(abs(diff)>2) %>% 
+  mutate(across(where(is.character),as.factor))
+
+#exceptions
+if ("PL" %in% files$country) {
+   temp<- temp %>% 
+   filter(sto!="D7")}
+
+if ("IT" %in% files$country) {
+   temp<- temp %>% 
+   filter(!sto%in% c("D61", "D62"))}
+
+  if (nrow(temp) > 0)
+luispack::show_DT(temp) 
+```
+
+##  NACE aggregation
+
+```{r 09 NACE agg}
+temp <- files %>%
+    filter(activity!="_Z" &
+           !unit_measure %in% c("PC","HW")& # we exclude hours worked because we use a higher theshold
+            type =="T") %>% 
+  check_NACE(ths_abs = 2, ths_rel = 0.1)
+
+    temp1 <- files %>%
+    filter(activity!="_Z" &
+           unit_measure %in% c("HW") &
+             type=="T") %>% 
+    check_NACE(ths_abs = 100, ths_rel = 0.1)
+    
+    temp<- bind_rows(temp,temp1)%>% 
+  mutate(across(where(is.character),as.factor))
+    
+  if (nrow(temp) > 0)
+luispack::show_DT(temp) 
+```
+
+##  HH aggregation
+
+```{r 10 HH_agg}
+# we use three rules for B.6N depending on whether C.D61 and D.62 is reported
+# a different one would be needed for HR
+
+temp <- files %>%
+   filter(activity =="_Z" &
+         unit_measure =="XDC" &
+           type =="T") %>% 
+  select(-activity,-unit_measure) %>% 
+  unite("sto",c(accounting_entry,sto)) %>% 
+   na.omit() %>% 
+   pivot_wider(names_from=sto, 
+               values_from=obs_value) %>%
+    mutate(
+    B_B5N_c = round(B_B2A3N + C_D1 + C_D4 - D_D4, digits = 0),
+    B_B5N_d = round(B_B5N_c - B_B5N, digits = 0))
+
+  if (country_sel %in% c("AT","BE","CY","DK","EE","FI","HU","LV","MT","PL","PT","RO","SK")){
+    temp<-temp %>% 
+      mutate(B_B6N_c=round(B_B5N + C_D61 +  C_D62 + C_D7 - D_D5  - D_D61 - D_D62 - D_D7, digits =0))}
+
+  if (country_sel %in% c("BG","CZ","DE","EL","ES","FR","IE","IT","LT","LU","NL","NO","RS","SE","SI")){
+    temp<-temp %>% 
+      mutate(B_B6N_c=round(B_B5N + C_D62 + C_D7 - D_D5  - D_D61  - D_D7, digits =0))}
+  
+  if (country_sel %in% c("HR")){
+    temp<-temp %>% 
+      mutate(B_B6N_c=round(B_B5N + C_D61 +  C_D62 + C_D7 - D_D5  - D_D61 - D_D7, digits =0))}
+  
+  temp<- temp %>% 
+    mutate(B_B6N_d = round(B_B6N_c - B_B6N, digits = 0)) %>% 
+    filter(if_any(ends_with("_d"), ~ abs(.x) > 3)) %>% 
+  mutate(across(where(is.character),as.factor))
+ 
+
+  if (nrow(temp) > 0)
+luispack::show_DT(temp) 
+```
+
+##  NUTS aggregation
+
+```{r 11 NUTS}
+   temp<-files %>% 
+  filter(type=="T" & unit_measure !="PC")
+
+  NUTS<-check_NUTS(temp,ths_abs = 2, ths_rel = 0.1)
+    
+if (nrow(NUTS) > 0)
+  luispack::show_DT(NUTS) 
+ 
+```
+
+##  Negative values and NACE C < BTE
+
+```{r 12 minor_checks}
+
+temp<- files %>% 
+  filter(type =="T" & sto %in% c("EMP","SAL") & table_identifier %in% c("T1002","T1200")) %>% 
+       pivot_wider(names_from = sto,
+                   values_from = obs_value) %>% 
+       mutate(SELF = round(EMP - SAL,1) ) %>% 
+  select(-EMP,-SAL) %>% 
+  rename(obs_value=SELF) %>% 
+  mutate(sto="SELF")
+
+temp <- bind_rows(files,temp) %>%
+  filter(type=="T" & unit_measure!="PC") %>% 
+        mutate(time_period=as.character(time_period)) %>% 
+       na.omit() %>% 
+       filter(obs_value < 0) %>% 
+   mutate(across(where(is.character),as.factor))
+
+  if (nrow(temp) > 0)
+luispack::show_DT(temp) 
+
+    temp <- files %>%
+       filter(activity %in% c("C", "BTE") & type =="T") %>%
+       pivot_wider(names_from = sto,
+                   values_from = obs_value) %>% 
+       mutate(SELF = round(EMP - SAL,1) ) %>% 
+      pivot_longer(cols = c(D1,P51G,EMP,SAL,B1G,SELF),
+            names_to = "sto",
+            values_to="obs_value") %>% 
+       pivot_wider(names_from = activity, 
+                   values_from = obs_value) %>%
+       mutate(check = round(BTE - C, digits=1)) %>%
+       filter(check < 0) %>% 
+  mutate(across(where(is.character),as.factor))
+
+  if (nrow(temp) > 0)
+luispack::show_DT(temp) 
+```
+
+##  Volume additivity
+
+```{r 13 volume}
+  vol<- files %>% 
+    filter( NUTS !="3" &
+              unit_measure %in% c("XDC","PC") &
+              activity=="_T" &
+              sto =="B1G" &
+              type=="T") %>% 
+    select(table_identifier,NUTS,country,ref_area,time_period,unit_measure,obs_value) %>% 
+    pivot_wider (names_from = table_identifier,
+                 values_from = obs_value) %>% 
+    mutate(obs_value = coalesce(T1001,T1200)) %>% 
+    select(-T1001, -T1200) %>% 
+    pivot_wider(names_from = unit_measure,
+                values_from = obs_value)
+
+
+vol1<- vol %>% 
+  select(-PC) %>% 
+  filter(NUTS=="1") %>% 
+  mutate(geo1 = substr(ref_area, start = 1, stop = 2)) %>%
+  group_by(country,geo1,time_period) %>%
+  mutate(share=XDC/sum(XDC)) %>% 
+  ungroup() %>% 
+  select(-geo1,-XDC,-NUTS) 
+  
+vol1_temp<- left_join(vol1,vol) %>% 
+  group_by(ref_area) %>% 
+    arrange(time_period,by_group=TRUE) %>% 
+  mutate(agg=PC*lag(share)) %>% 
+  group_by(country,time_period) %>%
+  summarise(agg=sum(agg)) %>% 
+  rename(ref_area=country) %>% 
+  na.omit()
+
+vol1 <-  left_join(vol1_temp,vol)
+
+vol2<- vol %>% 
+  select(-PC) %>% 
+  filter(NUTS=="2") %>% 
+  mutate(geo2 = substr(ref_area, start = 1, stop = 3)) %>%
+  group_by(country,geo2,time_period) %>%
+  mutate(share=XDC/sum(XDC)) %>% 
+  ungroup() %>% 
+  select(-geo2,-XDC,-NUTS)
+
+vol2_temp<- left_join(vol2,vol) %>% 
+  group_by(ref_area) %>%
+  arrange(time_period,by_group=TRUE) %>% 
+  mutate(agg=PC*lag(share)) %>%
+  mutate(geo2=substr(ref_area, start = 1, stop = 3)) %>% 
+  group_by(geo2,time_period) %>%
+  summarise(agg=sum(agg)) %>% 
+   rename(ref_area=geo2) %>% 
+  na.omit()
+
+vol2 <-  left_join(vol2_temp,vol)
+
+temp<- bind_rows(vol1,vol2) %>% 
+  select(ref_area,time_period,agg,PC) %>% 
+  mutate(agg=round(agg,2),
+         PC=round(PC,2)) %>% 
+  mutate(diff=round(agg-PC,2)) %>% 
+  filter(abs(diff)> 0.05) %>% 
+  mutate(across(where(is.character),as.factor))
+
+rm(vol1,vol2)
+
+if (nrow(temp) > 0)
+luispack::show_DT(temp) 
+```
+
+```{r data revision}
+
+rev <- files[activity %in% c("_T","_Z") & NUTS %in% c("0","2","3")&!str_detect(ref_area,"ZZ|ZZZ")] %>% 
+  dcast(... ~ type, value.var = "obs_value") %>% 
+  .[,rev:=round(T-V,0)] %>% 
+  .[,revp:=round(rev*100/V,1)] %>% 
+  .[rev!=0] %>% 
+  na.omit()
+```
+
+##  Revisions
+
+###  Revisions Table 1001
+
+
+```{r chart volume}
+temp<- rev %>% 
+  filter(table_identifier=="T1001" & NUTS %in% c("0","2") & !unit_measure %in% c("PC") & sto %in% c("B1G","EMP","POP"))
+
+if (nrow(temp)>0)
+plot_scatter("Revision T1001")
+
+temp<- rev %>% 
+  filter(NUTS %in% c("0","2") & unit_measure == "PC")
+
+if (nrow(temp)>0)
+ggplotly(temp %>% 
+           ggplot(aes(T,V,color=NUTS,label=ref_area))+
+           geom_point()+
+           theme_regacc_scatter +
+           scale_colour_manual(values= c("#0E47CB","#FFCC00","#AA5F18"))+
+           scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
+           scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
+           ggtitle("Revision Volume"))
+
+```
+
+###  Revisions Table 1200
+
+```{r chart rev t1200}
+temp<- rev %>% 
+  filter(NUTS %in% c("0","2","3") & sto %in% c("EMP","SAL","POP","B1G") &
+           activity %in% c("_T","_Z"))
+
+if (nrow(temp)>0)
+plot_scatter("Revision T1200")
+```
+
+###  Revisions Table 1002
+
+```{r chart rev t1002}
+temp<- rev %>% 
+  filter(NUTS %in% c("0","2") & sto %in% c("D1","P51G","EMP","SAL") & unit_measure !="PS" & activity =="_T" )
+
+if (nrow(temp)>0)
+plot_scatter("Revision T1002")
+```
+
+###  Revisions Table 1300
+
+```{r chart rev t1300}
+temp<- rev %>% 
+  filter(NUTS %in% c("0","2")  & sto %in% c("B5N","B6N"))
+
+if (nrow(temp)>0)
+plot_scatter("Revision T1300")
+```
+
+##  Series with outliers (> 30% change and more than 10 employees )
+
+```{r 18 outliers}
+if(nrow(rev)>0){
+threshold<-  rev %>% 
+  .[order(time_period),head(.SD,1),.(sto,unit_measure,time_period)] %>% 
+  .[,.(sto,unit_measure,time_period)] %>% 
+  .[,threshold:=min(time_period),.(sto,unit_measure)] %>% 
+  .[,time_period:=NULL] %>% 
+  unique()
+  
+  
+out<- left_join(threshold,files) %>%
+  mutate(cut= threshold - time_period +1 ) %>% 
+  filter(cut<=0 & unit_measure!="PC" & sto %in% c ("B1G", "POP", "EMP", "SAL", "D1", "B5N", "B6N")) %>% 
+  select(-cut,-threshold)
+
+out<-out[order(time_period),growth:=round(abs(obs_value/lag(obs_value)*100-100),1),.(ref_area, accounting_entry, sto, activity,unit_measure)] %>% 
+  .[growth > 30,] %>% 
+  .[,.(ref_area,sto,activity,unit_measure,time_period,NUTS,obs_value,growth)]
+
+  if (nrow(out) > 0)
+luispack::show_DT(out) 
+}
+```
+
+```{r include=FALSE}
+l <- ls()
+rm(list = l[sapply(l, function(x) is.data.frame(get(x)))])
+rm(l)
+gc()
+```
+

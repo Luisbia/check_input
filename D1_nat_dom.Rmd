@@ -1,0 +1,116 @@
+---
+title: "Regional Accounts checks: D1 in tables 1002 and 1300"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document: 
+    fig_width: 12
+    fig_height: 9
+params:
+  report: DE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r country, include=FALSE}
+country_sel <- params$report
+```
+
+```{r load_packages, include=FALSE}
+# Packages needed
+library (tidyverse)
+library (rio)
+library (plotly)
+library (DT)
+library (scales)
+library(plotly)
+```
+
+```{r}
+source("utils/theme_report.R")
+
+
+file <- list.files(path="data/denodo",
+           pattern= glob2rx(paste0("*",country_sel,"*")),
+           full.names=TRUE) %>% 
+  as_tibble() %>% 
+  mutate(date=map(value,file.mtime)) %>% 
+  unnest(date) %>% 
+  arrange(desc(date)) %>% 
+  head(1) %>% 
+  select(value) %>% 
+  pull() %>% 
+ fread() %>% 
+    filter(sto =="D1" &
+         activity %in% c("_T","_Z") &
+         type=="T") %>% 
+  mutate(NUTS=as.factor(NUTS)) %>% 
+ select(NUTS,ref_area, table_identifier, time_period, obs_value) %>%
+  pivot_wider(names_from = table_identifier,
+              values_from = obs_value) %>% 
+  mutate(T1002_T1300 = round(T1002*100/T1300,1))
+
+NUTS2021<-luispack::NUTS_2021 %>% 
+  filter(country %in% country_sel) %>% 
+  mutate(across(c(NUTS,label),as_factor)) %>% 
+  mutate(country=as.character(country)) %>% 
+  droplevels()
+
+file <- left_join (NUTS2021, file) %>% 
+  mutate(NUTS= as.factor (NUTS)) %>% 
+  mutate(ref_area=paste0(ref_area,"_",label)) %>% 
+  na.omit()
+```
+
+```{r}
+p <- ggplot()+
+  geom_line(data = file %>% filter(NUTS =="2"), aes(time_period,T1002_T1300,group=ref_area),colour = "#0E47CB", size = 0.7)+
+  geom_point(data = file %>% filter(NUTS =="0"),aes(time_period,T1002_T1300), size = 3, colour = "#FFCC00")+
+  theme_regacc_line+
+  theme(legend.position = "none")+
+ scale_y_continuous( breaks = breaks_pretty(3),label = label_number(accuracy = 1))+
+  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0))+
+  ggtitle ("D1 Table 1002 / D1 table 1300")
+
+ggplotly(p)%>% config(displayModeBar = F)
+```
+
+
+```{r}
+file <- file %>% 
+  pivot_longer(cols = c("T1002", "T1300","T1002_T1300"),
+               names_to ="series",
+               values_to = "values") %>% 
+  group_by(ref_area,series) %>% 
+  arrange(time_period, .by_group = TRUE) %>% 
+  mutate(change = round(values - lag(values),1)) %>% 
+  ungroup() %>% 
+  na.omit()
+```
+
+```{r}
+p <- ggplot(file %>% filter (NUTS=="2" & series =="T1002_T1300"), aes(time_period, change, group = ref_area))+
+  geom_line(size = 0.7,colour="#0E47CB")+
+  theme_regacc_line+
+theme(legend.position = "none")+
+ scale_y_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1))+
+  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0))+
+  xlab("") + ylab ("")+
+  ggtitle ("D1 Table 1002 / D1 table 1300,change")
+
+ggplotly(p)%>% config(displayModeBar = F)
+```
+
+```{r}
+datatable(na.omit(file),
+  filter = "top", class = "stripe hover", extensions = "Buttons",
+  options = list(  lengthMenu = list(c(20, -1), c("20", "All")),
+        pageLength = 20, dom = "Blfrtip", buttons = c("excel"))
+)
+```
+

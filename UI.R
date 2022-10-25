@@ -6,7 +6,7 @@ library(luispack)
 country_sel<- "SI"
 
 # bring xml files (/DONE or /INPUT)
-bring_files(folder_sel = "//fame2prod.cc.cec.eu.int/fame-estat/econ/REGACC/INPUT",
+bring_files(folder_sel = "//fame2prod.cc.cec.eu.int/fame-estat/econ/REGACC/DONE",
             country_sel = country_sel,
             folder_out = "data/xml",
             time_min = "2021-04-01")
@@ -40,7 +40,7 @@ source("06_revision.R")
 # Outliers
 rmarkdown::render("outliers.Rmd",# new only looks at new data not at not-revised
                   params = list(country = country_sel, 
-                                z_score = 3),
+                                z_score = 1.5),
                   output_file = paste0("others/",country_sel,"_outlier.html"))
 
 # D1 in T1002 and T1300
