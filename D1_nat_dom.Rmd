@@ -3,6 +3,7 @@ title: "Regional Accounts checks: D1 in tables 1002 and 1300"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document: 
+    code_download: true
     fig_width: 12
     fig_height: 9
 params:

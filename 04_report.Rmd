@@ -6,7 +6,7 @@ output:
   html_document: 
     code_download: true
     toc: yes
-    toc_float: yes
+    toc_float: no
     fig_width:  10
     fig_height: 7
     theme: cerulean
