@@ -8,7 +8,7 @@ output:
     fig_height: 9
 params:
   country: SI
-  z_score: 3.5
+  z_score: 1.5
 ---
 
 
@@ -36,6 +36,7 @@ library(DT)
 library(data.table)
 library(scales)
 library(rio)
+library(luispack)
 
 options(dplyr.summarise.inform = FALSE)
 ```
@@ -92,17 +93,19 @@ outlier<- left_join(min_period,df) %>%
 
 if (nrow(outlier)>0) show_DT(outlier)
 
-outlier<- outlier %>% 
+outlier_f<- outlier %>% 
   select(-time_period)
 ```
 
 
 ```{r outliers}
-temp<- left_join(outlier,df) %>% 
+temp<- left_join(outlier_f,df) %>% 
   ungroup() %>% 
   left_join(.,NUTS2021) %>% 
   filter(label!="Extra-regio" & type=="T" & NUTS %in% c("2","3")) %>% 
-  mutate(ref_area=paste0(ref_area,"_",label)) 
+  select(-outlier) %>% 
+  left_join(.,outlier) %>% 
+    mutate(ref_area=paste0(ref_area,"_",label))
 
 ```
 
@@ -112,14 +115,15 @@ temp<- left_join(outlier,df) %>%
 
 df_charts <- temp %>% 
   unite("series",c(ref_area,activity,accounting_entry,unit_measure)) %>% 
-  select(series,table_identifier,sto,time_period,obs_value) %>% 
+  select(series,table_identifier,sto,outlier,time_period,obs_value) %>% 
   group_by(series) %>% 
   nest() %>% 
   mutate(plot=map2(data,series,~ggplot(.x,aes(time_period,obs_value))+
                      geom_line (size = 0.7, colour = "#0E47CB")+
+                     geom_point(data=.x %>% filter(outlier=="outlier"),aes(time_period,obs_value),size=3,colour="#FFCC00")+
                      facet_wrap(~table_identifier~sto)+
                      theme_regacc_line+
-                     scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0))+
+                     scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0.2))+
                      scale_y_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1))+
                      ggtitle(paste0(.y))))
   

@@ -116,8 +116,8 @@ df_plots <- df_plots %>%
   mutate(plot = map2(data, ref_area, ~ ggplot(data = .x, aes(x = time_period, y = values, colour= series)) +
                        geom_line(size = 0.9)+
                        theme_regacc_line+
-  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
-  scale_y_continuous( breaks = breaks_pretty(4), labels = label_number())+
+  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(),expand=c(0,0.2))+
+  scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(),expand=c(0,0.2))+
   scale_colour_luis()+
     ggtitle(paste0("Geo:", .y)) 
                        ))
