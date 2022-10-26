@@ -120,7 +120,7 @@ df_charts <- temp %>%
   nest() %>% 
   mutate(plot=map2(data,series,~ggplot(.x,aes(time_period,obs_value))+
                      geom_line (size = 0.7, colour = "#0E47CB")+
-                     geom_point(data=.x %>% filter(outlier=="outlier"),aes(time_period,obs_value),size=3,colour="#FFCC00")+
+                     geom_point(data=.x %>% filter(outlier=="outlier"),aes(time_period,obs_value),size=5,colour="#FFCC00")+
                      facet_wrap(~table_identifier~sto)+
                      theme_regacc_line+
                      scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0.2))+

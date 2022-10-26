@@ -1,3 +1,5 @@
+## Only scripts and rmarkdown in one go
+
 options(tidyverse.quiet = TRUE)
 library(tidyverse)
 library(luispack)
@@ -20,10 +22,9 @@ rmarkdown::render("01_basic_info.Rmd",
 # basic checks, default ths=_abs2,ths_per=0.1
 source("02_basic_checks_xml.R")
 
-# Extract data from Denodo and create a csv file for the remaining scripts. 
-# If you do not need to re-extract from Denodo use the second script
-source("03_create_csv.R")
+# Extract data from Denodo and create a csv file for the remaining scripts
 source("03_create_csv_no_extraction.R")
+
 # Report in html
 rmarkdown::render("04_report.Rmd", 
                   params = list(report = country_sel),
@@ -50,23 +51,6 @@ rmarkdown::render("D1_nat_dom.Rmd", #/others
                   output_file = paste0("others/",country_sel,"_D1_dom_nat.html"))
 
 
-shiny_t1001 <- function(country_sel) {
-  .GlobalEnv$country_sel <- country_sel
-  shiny::runApp("app_t1001.R", launch.browser = TRUE)
-}
-shiny_t1001(country_sel)
-
-shiny_t1002_1200 <- function(country_sel) {
-  .GlobalEnv$country_sel <- country_sel
-  shiny::runApp("app_t1002_1200.R", launch.browser = TRUE)
-}
-shiny_t1002_1200(country_sel)
-
-shiny_t1300 <- function(country_sel) {
-  .GlobalEnv$country_sel <- country_sel
-  shiny::runApp("app_t1300.R", launch.browser = TRUE)
-}
-shiny_t1300(country_sel)
 
 rmarkdown::render("LFS.Rmd",
                   params = list(report = country_sel),

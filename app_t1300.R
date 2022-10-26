@@ -331,8 +331,8 @@ server <- function(input, output) {
       geom_line(size = 0.8)+
       theme_shiny_line+
       scale_colour_luis()+
-      scale_y_continuous(breaks = pretty_breaks(3), labels = label_number())+
-      scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0,0))
+      scale_y_continuous(breaks = pretty_breaks(3), labels = label_number(),expand=c(0,0.2))+
+      scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0,0.2))
 
     
       # legend
@@ -413,8 +413,8 @@ server <- function(input, output) {
       geom_point(size = 2.0) +
       theme_shiny_scatter +
       scale_colour_luis() +
-      scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0,0))+
-      scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))
+      scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0,0.2))+
+      scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0,0.2))
     
     # legend
     

@@ -7,7 +7,7 @@ output:
     fig_width: 12
     fig_height: 9
 params:
-  report: DE
+  report: AL
 ---
 
 ```{r setup, include=FALSE}

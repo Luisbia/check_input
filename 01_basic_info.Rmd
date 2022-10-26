@@ -1,15 +1,16 @@
 ---
-title: "Basic info"
+title: "Basic Info"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 author: "Unit C2"
 output:
   html_document: 
-    code_download: true
     toc: yes
-    toc_float: no
+    toc_float: yes
+    fig_width:  10
+    fig_height: 7
     theme: cerulean
 params:
-  report: EL
+  report: SI
 ---
 
 ```{r setup, include=FALSE}
@@ -25,15 +26,17 @@ knitr::opts_chunk$set(
 country_sel <- params$report
 ```
 
-```{r}
+```{r load_packages, include=FALSE}
+# Packages needed
+library(rio)
 library(tidyverse)
 library(data.table)
 library(luispack)
+options(dplyr.summarise.inform = FALSE)
 ```
 
-
-```{r}
-df <- luispack::load_xml(folder =  "data/xml",
+```{r, data}
+data<- luispack::load_xml(folder =  "data/xml",
                          country_sel = country_sel,
                          consolidate = FALSE) %>%
   arrange(date) %>%
@@ -51,94 +54,78 @@ df <- luispack::load_xml(folder =  "data/xml",
   slice_tail(n = 1) %>%
   ungroup() %>%
   mutate(country = str_sub(ref_area, 1, 2),
-         NUTS = str_length(ref_area) - 2) %>%
-  mutate(value = str_remove_all(value, "data/xml/NAREG_"))
+         NUTS = str_length(ref_area) - 2,
+         NUTS=as.factor(NUTS)) %>%
+  mutate(value = str_remove_all(value, "data/xml/NAREG_")) %>% 
+  as.data.table()
+
+NUTS2021<-NUTS_2021 %>% 
+  filter(country %in% country_sel) %>% 
+  mutate(across(c(NUTS,label),as_factor)) %>% 
+  mutate(country=as.character(country)) %>% 
+  as.data.table()
+
+
+data<- left_join(data,NUTS2021)
 ```
 
-## Reported data
+### Periods reported by table
 
 ```{r}
-temp <- df %>%
-  filter(!is.na(obs_value)) %>%
-  group_by(value,
-           country,
-           table_identifier,
-           NUTS,
-           sto,
-           accounting_entry,
-           activity,
-           unit_measure) %>%
-  summarise(min = min(time_period),
-            max = max(time_period)) %>%
-  mutate(across(where(is.character), as.factor))%>% 
+# show first and last year reported
+temp<- unique(data[!obs_status %in% c("L","M") & !is.na(obs_value) ,.(first = min(time_period), last = max(time_period)),by =.(table_identifier,country,sto,unit_measure)])%>% 
+  .[,lapply(.SD, as.factor),] %>% # convert to factors for better filtering
   droplevels()
 
 show_DT(temp)
 ```
 
-## Flags
+### Embargo dates
 
 ```{r}
-temp <- df %>%
-  filter(obs_status != "A" | conf_status != "F") %>%
-  select(
-    value,
-    country,
-    table_identifier,
-    NUTS,
-    sto,
-    accounting_entry,
-    unit_measure,
-    time_period,
-    obs_status,
-    conf_status
-  ) %>%
-  unique() %>%
-  mutate(across(where(is.character), as.factor))%>% 
-  droplevels()
+# show embargo dates
+if ("embargo_date" %in% colnames(data)){
+  temp<- na.omit(unique(files[,.(table_identifier,country,embargo_date)])) %>% 
+    .[,lapply(.SD, as.factor),] %>% 
+    droplevels() %>% 
+    luispack::show_DT() }
 
-if (nrow(temp) > 0) {
-  show_DT(temp)
-}
 ```
 
-## Embargo
+### Comments
 
 ```{r}
-if ("embargo_date" %in% names(df)) {
-
-  temp <- df %>%
-    filter(!is.na(embargo_date)) %>%
-    select(value,
-           country,
-           table_identifier,
-           embargo_date) %>%
-    unique() %>%
-    mutate(across(where(is.character), as.factor))%>% 
-  droplevels()
-
-if (nrow(temp) > 0) {
-  show_DT(temp)
-}}
-```
-
-## Comments
-
-```{r}
+# show comments in the files
 if ("comment_ts" %in% names(df)) {
-
-  temp <- df %>%
-    filter(!is.na(comment_ts)) %>%
-    filter(comment_ts!="xxx" & comment_ts!="") %>% 
-    select(value,
-           country,
-           table_identifier,
-           comment_ts) %>%
-    unique() %>%
-    mutate(across(where(is.character), as.factor))%>% 
+temp<-na.omit(unique(data[comment_ts!="xxx" & comment_ts!="",.(country,table_identifier,comment_ts)])) %>%   
+  .[,lapply(.SD, as.factor),] %>% 
   droplevels()
 
-if (nrow(temp) > 0) {
-  show_DT(temp)
-}}
+if (nrow(temp) > 0)
+  luispack::show_DT(temp) }
+```
+
+### Data not for publication
+
+```{r}
+# data not for publication, with a flag N
+temp<-na.omit(unique(data[conf_status=="N",.(country,table_identifier,sto,activity,unit_measure,conf_status)]))%>% 
+  .[,lapply(.SD, as.factor),] %>% 
+  droplevels()
+
+if (nrow(temp) > 0)
+  luispack::show_DT(temp) 
+ 
+```
+
+### Flags
+
+```{r}
+# flags E,P,B,D,U
+temp<-na.omit(unique(data[obs_status %in% c("E","P","B","D","U"),.(country,table_identifier,sto,unit_measure,obs_status,time_period)])) %>% 
+  .[,lapply(.SD, as.factor),] %>% 
+  droplevels()  
+
+if (nrow(temp) > 0)
+  luispack::show_DT(temp) 
 ```
