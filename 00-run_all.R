@@ -5,7 +5,7 @@ library(tidyverse)
 library(luispack)
 
 # select country
-country_sel<- "SI"
+country_sel<- "DK"
 
 # bring xml files (/DONE or /INPUT)
 bring_files(folder_sel = "//fame2prod.cc.cec.eu.int/fame-estat/econ/REGACC/DONE",

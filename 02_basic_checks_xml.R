@@ -1,5 +1,5 @@
 
-ths_int<- 2
+ths_int<- 0
 ths_per<- 0.1 
 
 

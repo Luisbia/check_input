@@ -3,7 +3,6 @@
 # Eurostat
 # 2020
 
- country_sel <- "SI"
 
  library(rio)
  library(shiny)

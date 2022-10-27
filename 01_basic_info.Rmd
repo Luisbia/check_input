@@ -73,7 +73,7 @@ data<- left_join(data,NUTS2021)
 
 ```{r}
 # show first and last year reported
-temp<- unique(data[!obs_status %in% c("L","M") & !is.na(obs_value) ,.(first = min(time_period), last = max(time_period)),by =.(table_identifier,country,sto,unit_measure)])%>% 
+temp<- unique(data[!obs_status %in% c("L","M") & !is.na(obs_value) ,.(first = min(time_period), last = max(time_period)),by =.(table_identifier,country,sto,accounting_entry,unit_measure)])%>% 
   .[,lapply(.SD, as.factor),] %>% # convert to factors for better filtering
   droplevels()
 

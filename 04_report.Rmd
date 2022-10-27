@@ -11,7 +11,7 @@ output:
     fig_height: 7
     theme: cerulean
 params:
-  report: SI
+  report: DK
 ---
 
 ```{r setup, include=FALSE}
@@ -548,7 +548,7 @@ ggplotly(temp %>%
 ```{r chart rev t1200}
 temp<- rev %>% 
   filter(NUTS %in% c("0","2","3") & sto %in% c("EMP","SAL","POP","B1G") &
-           activity %in% c("_T","_Z"))
+           activity %in% c("_T","_Z") & unit_measure!="PC")
 
 if (nrow(temp)>0)
 plot_scatter("Revision T1200")
