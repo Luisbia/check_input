@@ -1,0 +1,564 @@
+---
+title: "Overview"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,message = FALSE, warning = FALSE)
+```
+
+```{r}
+country_sel<- "DK"
+```
+
+
+```{r}
+library(luispack)
+library(tidyverse)
+library(data.table)
+library(gt)
+```
+
+
+```{r main data}
+
+gdp<- luispack::get_annual_GDP(na_item_sel="B1GQ",
+                               unit_sel = c("CP_MEUR","CP_MNAC","CP_MPPS_EU27_2020"),
+                               min_time="2000-01-01") %>% 
+  filter(geo==country_sel) %>% 
+    rename(sto=na_item,
+           time_period=time,
+           ref_area=geo,
+           obs_value=values,
+           unit_measure=unit) %>% 
+mutate(time_period=as.integer(str_sub(time_period,1,4))) 
+
+
+exc_rates<- gdp %>% 
+  pivot_wider(names_from=unit_measure,
+              values_from=obs_value) %>% 
+  mutate(EUR=CP_MNAC/CP_MEUR,
+         PPS=CP_MNAC/CP_MPPS_EU27_2020 ) %>% 
+  select(ref_area,time_period,EUR,PPS)
+
+new<-list.files(path="data/denodo",
+                  pattern= glob2rx(paste0("*",country_sel,"*")),
+                  full.names=TRUE) %>% 
+  as_tibble() %>% 
+  mutate(date=map(value,file.mtime)) %>% 
+  unnest(date) %>% 
+  arrange(desc(date)) %>% 
+  head(1) %>% 
+  select(value) %>% 
+  pull() %>% 
+  fread() %>%
+  .[type =="T" & activity %in% c("_T","_Z"),] %>% 
+  .[,NUTS:=as.factor(NUTS)] 
+
+prev<- regacc_eurobase %>% 
+  filter(country =="DK" & activity %in% c("TOTAL","Z"))
+
+# load the NUTS for the country  
+NUTS2021<-luispack::NUTS_2021 %>% 
+  filter(country %in% country_sel) %>% 
+  mutate(across(c(NUTS,label),as_factor)) %>% 
+  mutate(country=as.character(country)) %>% 
+  as.data.table()
+```
+
+
+
+```{r gva}
+gva_new<- new %>% 
+  filter(sto=="B1G" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure =="XDC" & 
+           table_identifier=="T1001") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(new=obs_value)
+
+gva_prev<- prev %>% 
+  filter(table=="gva3" & NUTS %in% c("0","2") & 
+           time_period>=2018 & unit_measure =="MIO_NAC") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(prev=obs_value)
+
+gva<- full_join(gva_prev,gva_new) %>% 
+  mutate(across(c(3:4),~round(.x/1000,1))) %>% 
+  mutate(diff=round(new-prev),
+         diffp=round(diff*100/prev,1)) %>% 
+  pivot_wider(names_from=time_period,
+              values_from=c(new,prev,diff,diffp)) %>% 
+  mutate(change_2021=round(new_2021/new_2020*100-100,1)) %>% 
+  select(ref_area,prev_2018,new_2018,diff_2018,diffp_2018,prev_2019,new_2019,diff_2019,diffp_2019,prev_2020,new_2020,diff_2020,diffp_2020,new_2021,change_2021) %>% 
+  arrange(ref_area) 
+
+
+gt_tbl <- gt(gva,rowname_col = "ref_area") %>% 
+  tab_header(    title = md("**Gross Value Added**"),
+                 subtitle = "Billions in national currency") %>% 
+   tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
+  tab_spanner(
+    label = "2018",
+    columns = c(prev_2018, new_2018, diff_2018,diffp_2018)
+  ) %>% 
+    tab_spanner(
+    label = "2019",
+    columns = c(prev_2019, new_2019, diff_2019,diffp_2019)
+  ) %>% 
+  tab_spanner(
+    label = "2020",
+    columns = c(prev_2020, new_2020, diff_2020,diffp_2020)
+  ) %>% 
+    tab_spanner(
+    label = "2021",
+    columns = c(new_2021, change_2021)
+  ) %>% 
+   cols_label(
+    prev_2018 = "prev",
+    new_2018 = "new",
+    diff_2018 = " rev",
+    diffp_2018 = " % rev",
+    prev_2019 = "prev",
+    new_2019 = "new",
+    diff_2019 = " rev",
+    diffp_2019 = " % rev",
+    prev_2020 = "prev",
+    new_2020 = "new",
+    diff_2020 = " rev",
+    diffp_2020 = " % rev",
+    new_2021 = "new",
+    change_2021 ="% change"
+  ) %>% 
+  fmt_integer(columns = c(2:3,6:7,10:11,14),
+              sep_mark=" ") %>% 
+  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
+             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+
+  #  tab_stubhead(label = "NUTS 2 region")
+gt_tbl
+
+```
+
+
+
+```{r gvagr}
+gvagr_new<- new %>% 
+  filter(sto=="B1G" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure =="PC" & 
+           table_identifier=="T1001") %>% 
+  mutate(obs_value=round(obs_value,1)) %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(new=obs_value)
+
+gvagr_prev<- prev %>% 
+  filter(table=="gvagr2" & NUTS %in% c("0","2") & 
+           time_period>=2018 & unit_measure=="PCH_PRE") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(prev=obs_value)
+
+gvagr<- full_join(gvagr_prev,gvagr_new) %>% 
+  mutate(diff=round(new-prev,1)) %>% 
+  pivot_wider(names_from=time_period,
+              values_from=c(new,prev,diff)) %>% 
+  select(ref_area,prev_2018,new_2018,diff_2018,prev_2019,new_2019,diff_2019,prev_2020,new_2020,diff_2020,new_2021) %>% 
+  arrange(ref_area) 
+
+
+gt_tbl <- gt(gvagr,rowname_col = "ref_area") %>% 
+  tab_header(    title = md("**Gross Value Added volume**"),
+                 subtitle = "% change") %>% 
+   tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
+  tab_spanner(
+    label = "2018",
+    columns = c(prev_2018, new_2018, diff_2018)
+  ) %>% 
+    tab_spanner(
+    label = "2019",
+    columns = c(prev_2019, new_2019, diff_2019)
+  ) %>% 
+  tab_spanner(
+    label = "2020",
+    columns = c(prev_2020, new_2020, diff_2020)
+  ) %>% 
+    tab_spanner(
+    label = "2021",
+    columns = c(new_2021)
+  ) %>% 
+   cols_label(
+    prev_2018 = "prev",
+    new_2018 = "new",
+    diff_2018 = " rev",
+    prev_2019 = "prev",
+    new_2019 = "new",
+    diff_2019 = " rev",
+    prev_2020 = "prev",
+    new_2020 = "new",
+    diff_2020 = " rev",
+    new_2021 = "new"
+  ) %>% 
+  data_color(columns = c(diff_2018,diff_2019,diff_2020),
+             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+
+  #  tab_stubhead(label = "NUTS 2 region")
+gt_tbl
+
+```
+
+
+
+```{r emp}
+emp_new<- new %>% 
+  filter(sto=="EMP" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure =="PS" & 
+           table_identifier=="T1001") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(new=obs_value)
+
+emp_prev<- prev %>% 
+  filter(table=="emp3" & NUTS %in% c("0","2") & 
+           time_period>=2018 & sto =="EMP") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(prev=obs_value)
+
+emp<- full_join(emp_prev,emp_new) %>% 
+  mutate(diff=round(new-prev),
+         diffp=round(diff*100/prev,1)) %>% 
+  pivot_wider(names_from=time_period,
+              values_from=c(new,prev,diff,diffp)) %>% 
+  mutate(change_2021=round(new_2021/new_2020*100-100,1)) %>% 
+  select(ref_area,prev_2018,new_2018,diff_2018,diffp_2018,prev_2019,new_2019,diff_2019,diffp_2019,prev_2020,new_2020,diff_2020,diffp_2020,new_2021,change_2021) %>% 
+  arrange(ref_area) 
+
+
+gt_tbl <- gt(emp,rowname_col = "ref_area") %>% 
+  tab_header(    title = md("**Employment**"),
+                 subtitle = "Thousands of persons") %>% 
+   tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
+   tab_spanner(
+    label = "2018",
+    columns = c(prev_2018, new_2018, diff_2018,diffp_2018)
+  ) %>% 
+    tab_spanner(
+    label = "2019",
+    columns = c(prev_2019, new_2019, diff_2019,diffp_2019)
+  ) %>% 
+  tab_spanner(
+    label = "2020",
+    columns = c(prev_2020, new_2020, diff_2020,diffp_2020)
+  ) %>% 
+    tab_spanner(
+    label = "2021",
+    columns = c(new_2021, change_2021)
+  ) %>% 
+   cols_label(
+     prev_2018 = "prev",
+    new_2018 = "new",
+    diff_2018 = " rev",
+    diffp_2018 = " % rev",
+    prev_2019 = "prev",
+    new_2019 = "new",
+    diff_2019 = " rev",
+    diffp_2019 = " % rev",
+    prev_2020 = "prev",
+    new_2020 = "new",
+    diff_2020 = " rev",
+    diffp_2020 = " % rev",
+    new_2021 = "new",
+    change_2021 ="% change"
+  ) %>% 
+  fmt_integer(columns = c(2:3,6:7,10:11,14),
+              sep_mark=" ") %>% 
+  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
+             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+
+  #  tab_stubhead(label = "NUTS 2 region")
+gt_tbl
+
+```
+
+
+
+
+```{r pop}
+pop_new<- new %>% 
+  filter(sto=="POP" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure =="PS" & 
+           table_identifier=="T1001") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(new=obs_value)
+
+pop_prev<- prev %>% 
+  filter(table=="pop3" & NUTS %in% c("0","2") & 
+           time_period>=2018)  %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(prev=obs_value)
+
+pop<- full_join(pop_prev,pop_new) %>% 
+  mutate(diff=round(new-prev),
+         diffp=round(diff*100/prev,1)) %>% 
+  pivot_wider(names_from=time_period,
+              values_from=c(new,prev,diff,diffp)) %>% 
+  mutate(change_2021=round(new_2021/new_2020*100-100,1)) %>% 
+  select(ref_area,prev_2018,new_2018,diff_2018,diffp_2018,prev_2019,new_2019,diff_2019,diffp_2019,prev_2020,new_2020,diff_2020,diffp_2020,new_2021,change_2021) %>% 
+  arrange(ref_area) 
+
+
+gt_tbl <- gt(pop,rowname_col = "ref_area") %>% 
+  tab_header(    title = md("**Population**"),
+                 subtitle = "Thousands of persons") %>% 
+   tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
+   tab_spanner(
+    label = "2018",
+    columns = c(prev_2018, new_2018, diff_2018,diffp_2018)
+  ) %>% 
+    tab_spanner(
+    label = "2019",
+    columns = c(prev_2019, new_2019, diff_2019,diffp_2019)
+  ) %>% 
+  tab_spanner(
+    label = "2020",
+    columns = c(prev_2020, new_2020, diff_2020,diffp_2020)
+  ) %>% 
+    tab_spanner(
+    label = "2021",
+    columns = c(new_2021, change_2021)
+  ) %>% 
+   cols_label(
+     prev_2018 = "prev",
+    new_2018 = "new",
+    diff_2018 = " rev",
+    diffp_2018 = " % rev",
+    prev_2019 = "prev",
+    new_2019 = "new",
+    diff_2019 = " rev",
+    diffp_2019 = " % rev",
+    prev_2020 = "prev",
+    new_2020 = "new",
+    diff_2020 = " rev",
+    diffp_2020 = " % rev",
+    new_2021 = "new",
+    change_2021 ="% change"
+  ) %>% 
+  fmt_integer(columns = c(2:3,6:7,10:11,14),
+              sep_mark=" ") %>% 
+  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
+             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+
+  #  tab_stubhead(label = "NUTS 2 region")
+gt_tbl
+
+```
+
+
+
+
+```{r emphw}
+emphw_new<- new %>% 
+  filter(sto=="EMP" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure =="HW" & 
+           table_identifier=="T1002") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(new=obs_value)
+
+emphw_prev<- prev %>% 
+  filter(table=="emphw2" & NUTS %in% c("0","2") & 
+           time_period>=2018 & sto =="EMP") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(prev=obs_value)
+
+emphw<- full_join(emphw_prev,emphw_new) %>% 
+    mutate(across(c(3:4),~round(.x/1000,1))) %>% 
+  mutate(diff=round(new-prev),
+         diffp=round(diff*100/prev,1)) %>% 
+  pivot_wider(names_from=time_period,
+              values_from=c(new,prev,diff,diffp)) %>% 
+  mutate(change_2021=round(new_2021/new_2020*100-100,1)) %>% 
+  select(ref_area,prev_2018,new_2018,diff_2018,diffp_2018,prev_2019,new_2019,diff_2019,diffp_2019,prev_2020,new_2020,diff_2020,diffp_2020,new_2021,change_2021) %>% 
+  arrange(ref_area) 
+
+
+gt_tbl <- gt(emp,rowname_col = "ref_area") %>% 
+  tab_header(    title = md("**Employment**"),
+                 subtitle = "Millions of hours worked") %>% 
+   tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
+   tab_spanner(
+    label = "2018",
+    columns = c(prev_2018, new_2018, diff_2018,diffp_2018)
+  ) %>% 
+    tab_spanner(
+    label = "2019",
+    columns = c(prev_2019, new_2019, diff_2019,diffp_2019)
+  ) %>% 
+  tab_spanner(
+    label = "2020",
+    columns = c(prev_2020, new_2020, diff_2020,diffp_2020)
+  ) %>% 
+    tab_spanner(
+    label = "2021",
+    columns = c(new_2021, change_2021)
+  ) %>% 
+   cols_label(
+     prev_2018 = "prev",
+    new_2018 = "new",
+    diff_2018 = " rev",
+    diffp_2018 = " % rev",
+    prev_2019 = "prev",
+    new_2019 = "new",
+    diff_2019 = " rev",
+    diffp_2019 = " % rev",
+    prev_2020 = "prev",
+    new_2020 = "new",
+    diff_2020 = " rev",
+    diffp_2020 = " % rev",
+    new_2021 = "new",
+    change_2021 ="% change"
+  ) %>% 
+  fmt_integer(columns = c(2:3,6:7,10:11,14),
+              sep_mark=" ") %>% 
+  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
+             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+
+  #  tab_stubhead(label = "NUTS 2 region")
+gt_tbl
+
+```
+
+
+
+```{r coe}
+coe_new<- new %>% 
+  filter(sto=="D1" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure =="XDC" & 
+           table_identifier=="T1002") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(new=obs_value)
+
+coe_prev<- prev %>% 
+  filter(table=="coe2" & NUTS %in% c("0","2") & 
+           time_period>=2018 & sto =="D1" & unit_measure == "MIO_NAC") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(prev=obs_value)
+
+coe<- full_join(coe_prev,coe_new) %>% 
+    mutate(across(c(3:4),~round(.x/1000,1))) %>% 
+  mutate(diff=round(new-prev),
+         diffp=round(diff*100/prev,1)) %>% 
+  pivot_wider(names_from=time_period,
+              values_from=c(new,prev,diff,diffp)) %>% 
+  mutate(change_2021=round(new_2021/new_2020*100-100,1)) %>% 
+  select(ref_area,prev_2018,new_2018,diff_2018,diffp_2018,prev_2019,new_2019,diff_2019,diffp_2019,prev_2020,new_2020,diff_2020,diffp_2020,new_2021,change_2021) %>% 
+  arrange(ref_area) 
+
+
+gt_tbl <- gt(coe,rowname_col = "ref_area") %>% 
+  tab_header(    title = md("**Compensation of employees**"),
+                 subtitle = "Billions in national currency") %>% 
+   tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
+   tab_spanner(
+    label = "2018",
+    columns = c(prev_2018, new_2018, diff_2018,diffp_2018)
+  ) %>% 
+    tab_spanner(
+    label = "2019",
+    columns = c(prev_2019, new_2019, diff_2019,diffp_2019)
+  ) %>% 
+  tab_spanner(
+    label = "2020",
+    columns = c(prev_2020, new_2020, diff_2020,diffp_2020)
+  ) %>% 
+    tab_spanner(
+    label = "2021",
+    columns = c(new_2021, change_2021)
+  ) %>% 
+   cols_label(
+     prev_2018 = "prev",
+    new_2018 = "new",
+    diff_2018 = " rev",
+    diffp_2018 = " % rev",
+    prev_2019 = "prev",
+    new_2019 = "new",
+    diff_2019 = " rev",
+    diffp_2019 = " % rev",
+    prev_2020 = "prev",
+    new_2020 = "new",
+    diff_2020 = " rev",
+    diffp_2020 = " % rev",
+    new_2021 = "new",
+    change_2021 ="% change"
+  ) %>% 
+  fmt_integer(columns = c(2:3,6:7,10:11,14),
+              sep_mark=" ") %>% 
+  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
+             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+
+  #  tab_stubhead(label = "NUTS 2 region")
+gt_tbl
+
+```
+
+
+
+
+```{r gfcf}
+gfcf_new<- new %>% 
+  filter(sto=="P51G" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure =="XDC" & 
+           table_identifier=="T1002") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(new=obs_value)
+
+gfcf_prev<- prev %>% 
+  filter(table=="gfcf2" & NUTS %in% c("0","2") & 
+           time_period>=2018 & sto =="P51G" & unit_measure == "MIO_NAC") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(prev=obs_value)
+
+gfcf<- full_join(gfcf_prev,gfcf_new) %>% 
+    mutate(across(c(3:4),~round(.x/1000,1))) %>% 
+  mutate(diff=round(new-prev),
+         diffp=round(diff*100/prev,1)) %>% 
+  pivot_wider(names_from=time_period,
+              values_from=c(new,prev,diff,diffp)) %>% 
+  mutate(change_2020=round(new_2020/new_2019*100-100,1)) %>% 
+  select(ref_area,prev_2018,new_2018,diff_2018,diffp_2018,prev_2019,new_2019,diff_2019,diffp_2019,new_2020,change_2020) %>% 
+  arrange(ref_area) 
+
+
+gt_tbl <- gt(gfcf,rowname_col = "ref_area") %>% 
+  tab_header(    title = md("**Gross Fixed Capital Formation**"),
+                 subtitle = "Billions in national currency") %>% 
+   tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
+   tab_spanner(
+    label = "2018",
+    columns = c(prev_2018, new_2018, diff_2018,diffp_2018)
+  ) %>% 
+    tab_spanner(
+    label = "2019",
+    columns = c(prev_2019, new_2019, diff_2019,diffp_2019)
+  ) %>% 
+    tab_spanner(
+    label = "2020",
+    columns = c(new_2020, change_2020)
+  ) %>% 
+   cols_label(
+    prev_2018 = "prev",
+    new_2018 = "new",
+    diff_2018 = " rev",
+    diffp_2018 = " % rev",
+    prev_2019 = "prev",
+    new_2019 = "new",
+    diff_2019 = " rev",
+    diffp_2019 = " % rev",
+    new_2020 = "new",
+    change_2020 ="% change"
+  ) %>% 
+  fmt_integer(columns = c(2:3,6:7,10),
+              sep_mark=" ") %>% 
+  data_color(columns = c(diffp_2018,diffp_2019),
+             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+
+  #  tab_stubhead(label = "NUTS 2 region")
+gt_tbl
+
+```
