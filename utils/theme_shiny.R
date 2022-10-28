@@ -51,7 +51,7 @@ theme_shiny_line <- theme_minimal (base_size = 12)+
                                   hjust = 0.2,
                                   colour = "white"),
         strip.placement = "outside",
-        panel.spacing = unit(0.1, "lines")
+        panel.spacing = unit(3, "lines")
   )
 
 theme_shiny_scatter <- theme_shiny_line+
@@ -104,7 +104,7 @@ theme_shiny_scatter <- theme_shiny_line+
                                   hjust = 0.2,
                                   colour = "white"),
         strip.placement = "outside",
-        panel.spacing = unit(0.1, "lines")
+        panel.spacing = unit(3, "lines")
   )
 
 

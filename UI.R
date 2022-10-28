@@ -3,13 +3,13 @@ library(tidyverse)
 library(luispack)
 
 # select country
-country_sel<- "SI"
+country_sel<- "DK"
 
 # bring xml files (/DONE or /INPUT)
 bring_files(folder_sel = "//fame2prod.cc.cec.eu.int/fame-estat/econ/REGACC/DONE",
             country_sel = country_sel,
             folder_out = "data/xml",
-            time_min = "2021-04-01")
+            time_min = "2022-04-01")
 
 # basic info (/basic_info)
 rmarkdown::render("01_basic_info.Rmd",
@@ -21,9 +21,11 @@ rmarkdown::render("01_basic_info.Rmd",
 source("02_basic_checks_xml.R")
 
 # Extract data from Denodo and create a csv file for the remaining scripts. 
-# If you do not need to re-extract from Denodo use the second script
 source("03_create_csv.R")
+# If you do not need to re-extract from Denodo use the second script
 source("03_create_csv_no_extraction.R")
+# If you want to create the csv from xml files
+source("03_create_csv_xml.R")
 # Report in html
 rmarkdown::render("04_report.Rmd", 
                   params = list(report = country_sel),

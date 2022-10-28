@@ -1,0 +1,144 @@
+---
+title: "Basic info"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: "Unit C2"
+output:
+  html_document: 
+    code_download: true
+    toc: yes
+    toc_float: no
+    theme: cerulean
+params:
+  report: EL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r country, include=FALSE}
+# country sel is specified in the UI script and taken from there
+country_sel <- params$report
+```
+
+```{r}
+library(tidyverse)
+library(data.table)
+library(luispack)
+```
+
+
+```{r}
+df <- luispack::load_xml(folder =  "data/xml",
+                         country_sel = country_sel,
+                         consolidate = FALSE) %>%
+  arrange(date) %>%
+  group_by(across(
+    c(
+      table_identifier,
+      ref_area,
+      sto,
+      accounting_entry,
+      activity,
+      unit_measure,
+      time_period
+    )
+  )) %>%
+  slice_tail(n = 1) %>%
+  ungroup() %>%
+  mutate(country = str_sub(ref_area, 1, 2),
+         NUTS = str_length(ref_area) - 2) %>%
+  mutate(value = str_remove_all(value, "data/xml/NAREG_"))
+```
+
+## Reported data
+
+```{r}
+temp <- df %>%
+  filter(!is.na(obs_value)) %>%
+  group_by(value,
+           country,
+           table_identifier,
+           NUTS,
+           sto,
+           accounting_entry,
+           activity,
+           unit_measure) %>%
+  summarise(min = min(time_period),
+            max = max(time_period)) %>%
+  mutate(across(where(is.character), as.factor))%>% 
+  droplevels()
+
+show_DT(temp)
+```
+
+## Flags
+
+```{r}
+temp <- df %>%
+  filter(obs_status != "A" | conf_status != "F") %>%
+  select(
+    value,
+    country,
+    table_identifier,
+    NUTS,
+    sto,
+    accounting_entry,
+    unit_measure,
+    time_period,
+    obs_status,
+    conf_status
+  ) %>%
+  unique() %>%
+  mutate(across(where(is.character), as.factor))%>% 
+  droplevels()
+
+if (nrow(temp) > 0) {
+  show_DT(temp)
+}
+```
+
+## Embargo
+
+```{r}
+if ("embargo_date" %in% names(df)) {
+
+  temp <- df %>%
+    filter(!is.na(embargo_date)) %>%
+    select(value,
+           country,
+           table_identifier,
+           embargo_date) %>%
+    unique() %>%
+    mutate(across(where(is.character), as.factor))%>% 
+  droplevels()
+
+if (nrow(temp) > 0) {
+  show_DT(temp)
+}}
+```
+
+## Comments
+
+```{r}
+if ("comment_ts" %in% names(df)) {
+
+  temp <- df %>%
+    filter(!is.na(comment_ts)) %>%
+    filter(comment_ts!="xxx" & comment_ts!="") %>% 
+    select(value,
+           country,
+           table_identifier,
+           comment_ts) %>%
+    unique() %>%
+    mutate(across(where(is.character), as.factor))%>% 
+  droplevels()
+
+if (nrow(temp) > 0) {
+  show_DT(temp)
+}}
+```

@@ -7,8 +7,9 @@ output:
     code_download: true
     toc: yes
     toc_float: no
-    fig_width:  10
-    fig_height: 7
+    fig_width:  12
+    fig_height: 9
+    
     theme: cerulean
 params:
   report: DK
@@ -548,7 +549,7 @@ ggplotly(temp %>%
 ```{r chart rev t1200}
 temp<- rev %>% 
   filter(NUTS %in% c("0","2","3") & sto %in% c("EMP","SAL","POP","B1G") &
-           activity %in% c("_T","_Z") & unit_measure!="PC")
+           activity %in% c("_T","_Z") & unit_measure %in% c("PC","HW"))
 
 if (nrow(temp)>0)
 plot_scatter("Revision T1200")
@@ -574,7 +575,7 @@ if (nrow(temp)>0)
 plot_scatter("Revision T1300")
 ```
 
-##  Series with outliers (> 30% change and more than 10 employees )
+##  Series with outliers (> 30% change in revised series )
 
 ```{r 18 outliers}
 if(nrow(rev)>0){
@@ -593,7 +594,11 @@ out<- left_join(threshold,files) %>%
 
 out<-out[order(time_period),growth:=round(abs(obs_value/lag(obs_value)*100-100),1),.(ref_area, accounting_entry, sto, activity,unit_measure)] %>% 
   .[growth > 30,] %>% 
-  .[,.(ref_area,sto,activity,unit_measure,time_period,NUTS,obs_value,growth)]
+  .[,.(ref_area,sto,activity,unit_measure,time_period,NUTS,obs_value,growth)] %>% 
+  .[obs_value>10 ] %>% 
+  setorder(-obs_value) %>% 
+  left_join(.,NUTS2021) %>% 
+  .[label!="Extra-regio"]
 
   if (nrow(out) > 0)
 luispack::show_DT(out) 

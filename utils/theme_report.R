@@ -50,7 +50,7 @@ theme_regacc_line <- theme_minimal (base_size = 12)+
                                   hjust = 0.2,
                                   colour = "white"),
         strip.placement = "outside",
-        panel.spacing = unit(0.1, "lines")
+        panel.spacing = unit(3, "lines")
   )
 
 theme_regacc_scatter <- theme_regacc_line+
@@ -104,7 +104,7 @@ theme_regacc_scatter <- theme_regacc_line+
                                   hjust = 0.2,
                                   colour = "white"),
         strip.placement = "outside",
-        panel.spacing = unit(0.1, "lines")
+        panel.spacing = unit(3, "lines")
   )
 
 theme_regacc_heatmap <- theme_regacc_line + 
