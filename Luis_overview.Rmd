@@ -1,6 +1,7 @@
 ---
 title: "Overview"
 output:
+  word_document: default
   html_document: default
 ---
 
@@ -18,6 +19,7 @@ library(luispack)
 library(tidyverse)
 library(data.table)
 library(gt)
+library(gtExtras)
 ```
 
 
@@ -66,9 +68,9 @@ NUTS2021<-luispack::NUTS_2021 %>%
   mutate(country=as.character(country)) %>% 
   as.data.table()
 ```
-
-
-
+  
+    
+    
 ```{r gva}
 gva_new<- new %>% 
   filter(sto=="B1G" & NUTS %in% c("0","2") & 
@@ -132,15 +134,19 @@ gt_tbl <- gt(gva,rowname_col = "ref_area") %>%
   ) %>% 
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
-  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
-             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+  #data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
+             #colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5))) %>% 
+    gt_theme_nytimes() %>% 
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
+   gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
 
 ```
 
-
+  
+    
 
 ```{r gvagr}
 gvagr_new<- new %>% 
@@ -197,15 +203,18 @@ gt_tbl <- gt(gvagr,rowname_col = "ref_area") %>%
     diff_2020 = " rev",
     new_2021 = "new"
   ) %>% 
-  data_color(columns = c(diff_2018,diff_2019,diff_2020),
-             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
-
+  # data_color(columns = c(diff_2018,diff_2019,diff_2020),
+  #            colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+    gt_theme_nytimes() %>% 
+   gt_hulk_col_numeric(c(diff_2018,diff_2019,diff_2020), trim = TRUE) %>% 
+   gt_plt_bar(column = new_2021, keep_column = TRUE)
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
 
 ```
 
-
+  
+    
 
 ```{r emp}
 emp_new<- new %>% 
@@ -269,16 +278,17 @@ gt_tbl <- gt(emp,rowname_col = "ref_area") %>%
   ) %>% 
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
-  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
-             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+    gt_theme_nytimes() %>% 
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
+   gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
 
 ```
 
-
-
+  
+  
 
 ```{r pop}
 pop_new<- new %>% 
@@ -342,16 +352,17 @@ gt_tbl <- gt(pop,rowname_col = "ref_area") %>%
   ) %>% 
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
-  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
-             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+    gt_theme_nytimes() %>% 
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
+   gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
 
 ```
 
-
-
+  
+  
 
 ```{r emphw}
 emphw_new<- new %>% 
@@ -416,15 +427,17 @@ gt_tbl <- gt(emp,rowname_col = "ref_area") %>%
   ) %>% 
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
-  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
-             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+    gt_theme_nytimes() %>% 
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
+   gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
 
 ```
 
-
+  
+  
 
 ```{r coe}
 coe_new<- new %>% 
@@ -489,8 +502,9 @@ gt_tbl <- gt(coe,rowname_col = "ref_area") %>%
   ) %>% 
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
-  data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
-             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+    gt_theme_nytimes() %>% 
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
+   gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
@@ -498,7 +512,8 @@ gt_tbl
 ```
 
 
-
+  
+  
 
 ```{r gfcf}
 gfcf_new<- new %>% 
@@ -555,8 +570,9 @@ gt_tbl <- gt(gfcf,rowname_col = "ref_area") %>%
   ) %>% 
   fmt_integer(columns = c(2:3,6:7,10),
               sep_mark=" ") %>% 
-  data_color(columns = c(diffp_2018,diffp_2019),
-             colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
+    gt_theme_nytimes() %>% 
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019), trim = TRUE) %>% 
+   gt_plt_bar(column = change_2020, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
