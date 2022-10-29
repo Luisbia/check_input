@@ -1,8 +1,9 @@
 ---
-title: "Overview"
+title: "Country Overview"
 output:
-  word_document: default
-  html_document: default
+  html_document: 
+    code_download: true
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -69,7 +70,7 @@ NUTS2021<-luispack::NUTS_2021 %>%
   as.data.table()
 ```
   
-    
+## Gross Value Added in current prices
     
 ```{r gva}
 gva_new<- new %>% 
@@ -97,8 +98,8 @@ gva<- full_join(gva_prev,gva_new) %>%
 
 
 gt_tbl <- gt(gva,rowname_col = "ref_area") %>% 
-  tab_header(    title = md("**Gross Value Added**"),
-                 subtitle = "Billions in national currency") %>% 
+  #tab_header(    title = md("**Gross Value Added**"),
+   #              subtitle = "Billions in national currency") %>% 
    tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
   tab_spanner(
     label = "2018",
@@ -137,8 +138,8 @@ gt_tbl <- gt(gva,rowname_col = "ref_area") %>%
   #data_color(columns = c(diffp_2018,diffp_2019,diffp_2020),
              #colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5))) %>% 
     gt_theme_nytimes() %>% 
-   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
-   gt_plt_bar(column = change_2021, keep_column = TRUE)
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020,change_2021), trim = TRUE)
+   # gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
@@ -146,7 +147,8 @@ gt_tbl
 ```
 
   
-    
+## Percentage change Volume GVA
+  
 
 ```{r gvagr}
 gvagr_new<- new %>% 
@@ -172,8 +174,8 @@ gvagr<- full_join(gvagr_prev,gvagr_new) %>%
 
 
 gt_tbl <- gt(gvagr,rowname_col = "ref_area") %>% 
-  tab_header(    title = md("**Gross Value Added volume**"),
-                 subtitle = "% change") %>% 
+  # tab_header(    title = md("**Gross Value Added volume**"),
+  #                subtitle = "% change") %>% 
    tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
   tab_spanner(
     label = "2018",
@@ -206,15 +208,15 @@ gt_tbl <- gt(gvagr,rowname_col = "ref_area") %>%
   # data_color(columns = c(diff_2018,diff_2019,diff_2020),
   #            colors = scales::col_numeric(palette = c("#E04040","#FFCC00"), domain = c(-5,5)))
     gt_theme_nytimes() %>% 
-   gt_hulk_col_numeric(c(diff_2018,diff_2019,diff_2020), trim = TRUE) %>% 
-   gt_plt_bar(column = new_2021, keep_column = TRUE)
+   gt_hulk_col_numeric(c(diff_2018,diff_2019,diff_2020,new_2021), trim = TRUE)  
+   #gt_plt_bar(column = new_2021, keep_column = TRUE)
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
 
 ```
 
   
-    
+## Employment in persons
 
 ```{r emp}
 emp_new<- new %>% 
@@ -241,8 +243,8 @@ emp<- full_join(emp_prev,emp_new) %>%
 
 
 gt_tbl <- gt(emp,rowname_col = "ref_area") %>% 
-  tab_header(    title = md("**Employment**"),
-                 subtitle = "Thousands of persons") %>% 
+  # tab_header(    title = md("**Employment**"),
+  #                subtitle = "Thousands of persons") %>% 
    tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
    tab_spanner(
     label = "2018",
@@ -279,8 +281,8 @@ gt_tbl <- gt(emp,rowname_col = "ref_area") %>%
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
     gt_theme_nytimes() %>% 
-   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
-   gt_plt_bar(column = change_2021, keep_column = TRUE)
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020,change_2021), trim = TRUE)  
+   #gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
@@ -288,6 +290,7 @@ gt_tbl
 ```
 
   
+## Population
   
 
 ```{r pop}
@@ -315,8 +318,8 @@ pop<- full_join(pop_prev,pop_new) %>%
 
 
 gt_tbl <- gt(pop,rowname_col = "ref_area") %>% 
-  tab_header(    title = md("**Population**"),
-                 subtitle = "Thousands of persons") %>% 
+  # tab_header(    title = md("**Population**"),
+  #                subtitle = "Thousands of persons") %>% 
    tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
    tab_spanner(
     label = "2018",
@@ -353,15 +356,16 @@ gt_tbl <- gt(pop,rowname_col = "ref_area") %>%
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
     gt_theme_nytimes() %>% 
-   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
-   gt_plt_bar(column = change_2021, keep_column = TRUE)
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020,change_2021), trim = TRUE) 
+   #gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
 
 ```
-
   
+  
+## Employment in Hours Worked
   
 
 ```{r emphw}
@@ -390,8 +394,8 @@ emphw<- full_join(emphw_prev,emphw_new) %>%
 
 
 gt_tbl <- gt(emp,rowname_col = "ref_area") %>% 
-  tab_header(    title = md("**Employment**"),
-                 subtitle = "Millions of hours worked") %>% 
+  # tab_header(    title = md("**Employment**"),
+  #                subtitle = "Millions of hours worked") %>% 
    tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
    tab_spanner(
     label = "2018",
@@ -428,8 +432,83 @@ gt_tbl <- gt(emp,rowname_col = "ref_area") %>%
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
     gt_theme_nytimes() %>% 
-   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
-   gt_plt_bar(column = change_2021, keep_column = TRUE)
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020,change_2021), trim = TRUE)
+   #gt_plt_bar(column = change_2021, keep_column = TRUE)
+
+  #  tab_stubhead(label = "NUTS 2 region")
+gt_tbl
+
+```
+
+## Net Disposable Income
+  
+
+```{r b6n}
+b6n_new<- new %>% 
+  filter(sto=="B6N" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure =="XDC" & 
+           table_identifier=="T1300") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(new=obs_value)
+
+b6n_prev<- prev %>% 
+  filter(table=="hh2" & NUTS %in% c("0","2") & 
+           time_period>=2018 & sto =="B6N" & unit_measure=="MIO_NAC") %>% 
+  select(ref_area,time_period,obs_value) %>% 
+  rename(prev=obs_value)
+
+b6n<- full_join(b6n_prev,b6n_new) %>% 
+    mutate(across(c(3:4),~round(.x/1000,1))) %>% 
+  mutate(diff=round(new-prev),
+         diffp=round(diff*100/prev,1)) %>% 
+  pivot_wider(names_from=time_period,
+              values_from=c(new,prev,diff,diffp)) %>% 
+  mutate(change_2021=round(new_2021/new_2020*100-100,1)) %>% 
+  select(ref_area,prev_2018,new_2018,diff_2018,diffp_2018,prev_2019,new_2019,diff_2019,diffp_2019,prev_2020,new_2020,diff_2020,diffp_2020,new_2021,change_2021) %>% 
+  arrange(ref_area) 
+
+
+gt_tbl <- gt(b6n,rowname_col = "ref_area") %>% 
+  # tab_header(    title = md("**Employment**"),
+  #                subtitle = "Millions of hours worked") %>% 
+   tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
+   tab_spanner(
+    label = "2018",
+    columns = c(prev_2018, new_2018, diff_2018,diffp_2018)
+  ) %>% 
+    tab_spanner(
+    label = "2019",
+    columns = c(prev_2019, new_2019, diff_2019,diffp_2019)
+  ) %>% 
+  tab_spanner(
+    label = "2020",
+    columns = c(prev_2020, new_2020, diff_2020,diffp_2020)
+  ) %>% 
+    tab_spanner(
+    label = "2021",
+    columns = c(new_2021, change_2021)
+  ) %>% 
+   cols_label(
+     prev_2018 = "prev",
+    new_2018 = "new",
+    diff_2018 = " rev",
+    diffp_2018 = " % rev",
+    prev_2019 = "prev",
+    new_2019 = "new",
+    diff_2019 = " rev",
+    diffp_2019 = " % rev",
+    prev_2020 = "prev",
+    new_2020 = "new",
+    diff_2020 = " rev",
+    diffp_2020 = " % rev",
+    new_2021 = "new",
+    change_2021 ="% change"
+  ) %>% 
+  fmt_integer(columns = c(2:3,6:7,10:11,14),
+              sep_mark=" ") %>% 
+    gt_theme_nytimes() %>% 
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020,change_2021), trim = TRUE) 
+   #gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
@@ -437,7 +516,7 @@ gt_tbl
 ```
 
   
-  
+## Compensation of Employees
 
 ```{r coe}
 coe_new<- new %>% 
@@ -465,8 +544,8 @@ coe<- full_join(coe_prev,coe_new) %>%
 
 
 gt_tbl <- gt(coe,rowname_col = "ref_area") %>% 
-  tab_header(    title = md("**Compensation of employees**"),
-                 subtitle = "Billions in national currency") %>% 
+  # tab_header(    title = md("**Compensation of employees**"),
+  #                subtitle = "Billions in national currency") %>% 
    tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
    tab_spanner(
     label = "2018",
@@ -503,8 +582,8 @@ gt_tbl <- gt(coe,rowname_col = "ref_area") %>%
   fmt_integer(columns = c(2:3,6:7,10:11,14),
               sep_mark=" ") %>% 
     gt_theme_nytimes() %>% 
-   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020), trim = TRUE) %>% 
-   gt_plt_bar(column = change_2021, keep_column = TRUE)
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,diffp_2020,change_2021), trim = TRUE) 
+   #gt_plt_bar(column = change_2021, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
@@ -513,6 +592,7 @@ gt_tbl
 
 
   
+## Gross Fixed Capital Formation
   
 
 ```{r gfcf}
@@ -541,8 +621,8 @@ gfcf<- full_join(gfcf_prev,gfcf_new) %>%
 
 
 gt_tbl <- gt(gfcf,rowname_col = "ref_area") %>% 
-  tab_header(    title = md("**Gross Fixed Capital Formation**"),
-                 subtitle = "Billions in national currency") %>% 
+  # tab_header(    title = md("**Gross Fixed Capital Formation**"),
+  #                subtitle = "Billions in national currency") %>% 
    tab_source_note( source_note = md("*Source: Luis Biedma, Unit C2*")) %>% 
    tab_spanner(
     label = "2018",
@@ -571,10 +651,11 @@ gt_tbl <- gt(gfcf,rowname_col = "ref_area") %>%
   fmt_integer(columns = c(2:3,6:7,10),
               sep_mark=" ") %>% 
     gt_theme_nytimes() %>% 
-   gt_hulk_col_numeric(c(diffp_2018,diffp_2019), trim = TRUE) %>% 
-   gt_plt_bar(column = change_2020, keep_column = TRUE)
+   gt_hulk_col_numeric(c(diffp_2018,diffp_2019,change_2020), trim = TRUE) 
+   #gt_plt_bar(column = change_2020, keep_column = TRUE)
 
   #  tab_stubhead(label = "NUTS 2 region")
 gt_tbl
 
 ```
+
