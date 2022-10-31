@@ -38,6 +38,7 @@ library(scales)
 library(knitr)
 library(data.table)
 library(luispack)
+library(patchwork)
 
 options(dplyr.summarise.inform = FALSE)
 ```
@@ -135,7 +136,12 @@ t1300c<-completeness (t1300)
 
 coverage<- tibble("t1001"=t1001c,"t1002"=t1002c,"t1200"=t1200c,"t1300"=t1300c)
  
-kable(coverage)
+t1001c<-donut_plot(value=t1001c/100, title="Table 1001")
+t1002c<-donut_plot(value=t1002c/100, title="Table 1002")
+t1200c<-donut_plot(value=t1200c/100, title="Table 1200")
+t1300c<-donut_plot(value=t1300c/100, title="Table 1300")
+
+t1001c + t1002c + t1200c + t1300c
 ```
 
 ### Table 1001
