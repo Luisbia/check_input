@@ -31,12 +31,13 @@ country_sel <- params$report
 library(rio)
 library(tidyverse)
 library(data.table)
-library(luispack)
+library(dataregacc)
+library(regacc)
 options(dplyr.summarise.inform = FALSE)
 ```
 
 ```{r, data}
-data<- luispack::load_xml(folder =  "data/xml",
+data<- regacc::load_xml(folder =  "data/xml",
                          country_sel = country_sel,
                          consolidate = FALSE) %>%
   arrange(date) %>%
@@ -59,7 +60,7 @@ data<- luispack::load_xml(folder =  "data/xml",
   mutate(value = str_remove_all(value, "data/xml/NAREG_")) %>% 
   as.data.table()
 
-NUTS2021<-NUTS_2021 %>% 
+NUTS2021<-dataregacc::NUTS_2021 %>% 
   filter(country %in% country_sel) %>% 
   mutate(across(c(NUTS,label),as_factor)) %>% 
   mutate(country=as.character(country)) %>% 
