@@ -75,7 +75,7 @@ p <- ggplot()+
   theme_regacc_line+
   theme(legend.position = "none")+
  scale_y_continuous( breaks = breaks_pretty(3),label = label_number(accuracy = 1))+
-  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0))+
+  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0.02))+
   ggtitle ("D1 Table 1002 / D1 table 1300")
 
 ggplotly(p)%>% config(displayModeBar = F)

@@ -4,15 +4,17 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 author: "Unit C2"
 output:
   html_document: 
+    
     code_download: true
     toc: yes
     toc_float: no
     fig_width:  12
     fig_height: 9
-    
     theme: cerulean
 params:
   report: DK
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -37,8 +39,9 @@ library(DT)
 library(scales)
 library(knitr)
 library(data.table)
-library(luispack)
 library(patchwork)
+library(regacc)
+library(dataregacc)
 
 options(dplyr.summarise.inform = FALSE)
 ```
@@ -60,7 +63,7 @@ files<-list.files(path="data/denodo",
 .[,NUTS:=as.factor(NUTS)] 
 
 # load the NUTS for the country  
-NUTS2021<-luispack::NUTS_2021 %>% 
+NUTS2021<-dataregacc::NUTS_2021 %>% 
   filter(country %in% country_sel) %>% 
   mutate(across(c(NUTS,label),as_factor)) %>% 
   mutate(country=as.character(country)) %>% 
@@ -78,8 +81,6 @@ nfsa <- fread("data/denodo/nfsa.csv") %>%
 
 
 ```{r, aux_scripts}
-# calculating completeness
-source("utils/completeness.R")
 # plot functions
 source("utils/plot_report.R")
 # custom theme
@@ -89,7 +90,7 @@ source("utils/theme_report.R")
 
 ```{r, out.width="20%",fig.align='right'}
 # logo for the report
-knitr::include_graphics("eurostat_logo.svg")
+knitr::include_graphics("eurostat_new.PNG")
 ```
 
 ## Metadata
@@ -98,7 +99,7 @@ knitr::include_graphics("eurostat_logo.svg")
 # load issues found in previous transmissions + useful things to know
 rio::import(paste0("metadata/",country_sel,"_reg_metadata.xlsx"),
             sheet="metadata") %>% 
-luispack::show_DT()
+regacc::show_DT()
 ```
 
 
@@ -107,39 +108,12 @@ luispack::show_DT()
 ### As in NQR
 
 ```{r NQR}
-# Theoretical tables
 
-completeness<- function (input) {
-  
-  temp <- files %>% 
-    filter(type=="T") %>% # filter only T
-    left_join(input,.) # join with the respective theoretical table
-  
-  inc<- temp %>% 
-  group_by(country) %>% # group by country
-  summarise(reported=sum(!is.na(obs_value))) %>% # check how many are empty
-  pull(reported) # extract as value
-  
-  tot<-temp %>% 
-  group_by(country) %>% 
-  summarise(total=n()) %>% 
-    pull(total) # count all
-  
-  temp<-round(inc*100/tot,2) #calculate the ratio
-  return (temp)
-   }
+t1001c<-regacc::report_completeness (files,"T1001")
+t1002c<-regacc::report_completeness (files,"T1002")
+t1200c<-regacc::report_completeness (files,"T1200")
+t1300c<-regacc::report_completeness (files,"T1300")
 
-t1001c<-completeness (t1001)
-t1002c<-completeness (t1002)
-t1200c<-completeness (t1200)
-t1300c<-completeness (t1300)
-
-coverage<- tibble("t1001"=t1001c,"t1002"=t1002c,"t1200"=t1200c,"t1300"=t1300c)
- 
-t1001c<-donut_plot(value=t1001c/100, title="Table 1001")
-t1002c<-donut_plot(value=t1002c/100, title="Table 1002")
-t1200c<-donut_plot(value=t1200c/100, title="Table 1200")
-t1300c<-donut_plot(value=t1300c/100, title="Table 1300")
 
 t1001c + t1002c + t1200c + t1300c
 ```
@@ -166,10 +140,11 @@ t1001<- left_join(files, NUTS2021) %>% # join with the NUTS
 # Heatmap 1001 ----
 #we use a function from utilities/plot_report.R
 # it has two arguments the sto and the title
+
+
 plot_heatmap_t1001("B1G","Value Added NUTS 2")
 plot_heatmap_t1001("EMP","Employment NUTS 2")
 plot_heatmap_t1001("POP","Population NUTS 2")
-
 ```
 
 ```{r chart02}
@@ -293,7 +268,7 @@ if ("PL" %in% files$country) {
 }
 
   if (nrow(temp) > 0)
-luispack::show_DT(temp) 
+regacc::show_DT(temp) 
 
 
 ```
@@ -320,7 +295,7 @@ if ("IT" %in% files$country) {
    filter(!sto%in% c("D61", "D62"))}
 
   if (nrow(temp) > 0)
-luispack::show_DT(temp) 
+regacc::show_DT(temp) 
 ```
 
 ##  NACE aggregation
@@ -342,7 +317,7 @@ temp <- files %>%
   mutate(across(where(is.character),as.factor))
     
   if (nrow(temp) > 0)
-luispack::show_DT(temp) 
+regacc::show_DT(temp) 
 ```
 
 ##  HH aggregation
@@ -383,7 +358,7 @@ temp <- files %>%
  
 
   if (nrow(temp) > 0)
-luispack::show_DT(temp) 
+regacc::show_DT(temp) 
 ```
 
 ##  NUTS aggregation
@@ -395,7 +370,7 @@ luispack::show_DT(temp)
   NUTS<-check_NUTS(temp,ths_abs = 2, ths_rel = 0.1)
     
 if (nrow(NUTS) > 0)
-  luispack::show_DT(NUTS) 
+  regacc::show_DT(NUTS) 
  
 ```
 
@@ -420,7 +395,7 @@ temp <- bind_rows(files,temp) %>%
    mutate(across(where(is.character),as.factor))
 
   if (nrow(temp) > 0)
-luispack::show_DT(temp) 
+regacc::show_DT(temp) 
 
     temp <- files %>%
        filter(activity %in% c("C", "BTE") & type =="T") %>%
@@ -437,7 +412,7 @@ luispack::show_DT(temp)
   mutate(across(where(is.character),as.factor))
 
   if (nrow(temp) > 0)
-luispack::show_DT(temp) 
+regacc::show_DT(temp) 
 ```
 
 ##  Volume additivity
@@ -510,7 +485,7 @@ temp<- bind_rows(vol1,vol2) %>%
 rm(vol1,vol2)
 
 if (nrow(temp) > 0)
-luispack::show_DT(temp) 
+regacc::show_DT(temp) 
 ```
 
 ```{r data revision}
@@ -541,12 +516,12 @@ temp<- rev %>%
 if (nrow(temp)>0)
 ggplotly(temp %>% 
            ggplot(aes(T,V,color=NUTS,label=ref_area))+
-           geom_point()+
+           geom_point(aes(text=paste("ref_area:",ref_area,"\n","T:",T,"\n","V:",V,"\n","time_period:",time_period)))+
            theme_regacc_scatter +
-           scale_colour_manual(values= c("#0E47CB","#FFCC00","#AA5F18"))+
+           scale_colour_ra()+
            scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
            scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
-           ggtitle("Revision Volume"))
+           ggtitle("Revision Volume"),tooltip="text")
 
 ```
 
@@ -607,14 +582,8 @@ out<-out[order(time_period),growth:=round(abs(obs_value/lag(obs_value)*100-100),
   .[label!="Extra-regio"]
 
   if (nrow(out) > 0)
-luispack::show_DT(out) 
+regacc::show_DT(out) 
 }
 ```
 
-```{r include=FALSE}
-l <- ls()
-rm(list = l[sapply(l, function(x) is.data.frame(get(x)))])
-rm(l)
-gc()
-```
 

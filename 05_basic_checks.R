@@ -1,7 +1,8 @@
 library(data.table)
 library(openxlsx)
 library(tidyverse)
-library(luispack)
+library(regacc)
+library(dataregacc)
 ths_int<- 2
 ths_per<- 0.1 
 

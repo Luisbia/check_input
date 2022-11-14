@@ -7,12 +7,12 @@ plot_heatmap_t1001<- function(x,title){
     #group_by(ref_area, sto, activity) %>%
     #mutate(norm = round(obs_value / mean(obs_value, na.rm = TRUE),1)) %>% 
     ggplot(aes(time_period, fct_rev(ref_area), fill = change)) +
-    geom_tile() +
+    geom_tile(aes(text=paste("ref_area:",ref_area,"\n","change:",change,"\n","time_period:",time_period))) +
     theme_regacc_heatmap+
     theme(axis.text.x = element_text(size =9,angle = 90))+
     scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
       scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
-    ggtitle(paste0(title)))}
+    ggtitle(paste0(title)),tooltip="text")}
 
 # Heatmap 1002----
 plot_heatmap_t1002<- function(x,title){
@@ -25,13 +25,13 @@ plot_heatmap_t1002<- function(x,title){
       filter(NUTS == "2") %>% 
       na.omit() %>% 
      ggplot(aes(time_period, fct_rev(ref_area), fill = share)) +
-    geom_tile() +
+    geom_tile(aes(text=paste("ref_area:",ref_area,"\n","share:",share,"\n","time_period:",time_period))) +
     facet_wrap(~activity)+ 
     theme_regacc_heatmap+
       theme(axis.text.x = element_text(size =9,angle = 90))+
       scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
       scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
-      ggtitle(paste0(title)))}
+      ggtitle(paste0(title)),tooltip="text")}
 
 # Heatmap 1200----
 plot_heatmap_t1200<- function(x, y, title){
@@ -44,13 +44,13 @@ plot_heatmap_t1200<- function(x, y, title){
       filter(NUTS == y) %>% 
       na.omit() %>% 
     ggplot(aes(time_period, fct_rev(ref_area), fill = share)) +
-    geom_tile() +
+    geom_tile(aes(text=paste("ref_area:",ref_area,"\n","share:",share,"\n","time_period:",time_period))) +
     facet_wrap(~activity)+ 
     theme_regacc_heatmap+
     theme(axis.text.x = element_text(size =9,angle = 90))+
       scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
       scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
-          ggtitle(paste0(title)))}
+          ggtitle(paste0(title)),tooltip="text")}
 
   
   # Heatmap 1300----
@@ -62,23 +62,23 @@ plot_heatmap_t1300<- function(title){
       filter (NUTS =="2") %>% 
       na.omit() %>% 
       ggplot(aes(time_period, fct_rev(ref_area), fill = share)) +
-    geom_tile() +
+    geom_tile(aes(text=paste("ref_area:",ref_area,"\n","share:",share,"\n","time_period:",time_period))) +
     facet_wrap(~sto) +
     theme_regacc_heatmap+
     theme(axis.text.x = element_text(size =9,angle = 90))+
       scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
       scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
-        ggtitle(paste0(title)))}
+        ggtitle(paste0(title)),tooltip="text")}
 
 
 plot_scatter <- function(title) {
 ggplotly(temp %>% 
-           ggplot(aes(rev,revp,color=NUTS,label=ref_area))+
-           geom_point()+
+           ggplot(aes(rev,revp,color=NUTS))+
+           geom_point(aes(text=paste("ref_area:",ref_area,"\n","rev:",rev,"\n","revp:",revp,"\n","time_period:",time_period)))+
            facet_wrap(~sto, scales="free")+
            theme_regacc_scatter +
            scale_colour_manual(values= c("#0E47CB","#FFCC00","#AA5F18"))+
            scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
            scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
-           ggtitle(title))
+           ggtitle(title),tooltip="text")
   }

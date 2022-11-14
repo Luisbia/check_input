@@ -1,7 +1,8 @@
 options(tidyverse.quiet = TRUE)
 library(tidyverse)
-library(luispack)
-
+library(dataregacc)
+library(regacc)
+check_packages()
 # select country
 country_sel<- "DK"
 
@@ -9,7 +10,7 @@ country_sel<- "DK"
 bring_files(folder_sel = "//fame2prod.cc.cec.eu.int/fame-estat/econ/REGACC/DONE",
             country_sel = country_sel,
             folder_out = "data/xml",
-            time_min = "2022-04-01")
+            time_min = "2022-10-01")
 
 # basic info (/basic_info)
 rmarkdown::render("01_basic_info.Rmd",
@@ -26,6 +27,8 @@ source("03_create_csv.R")
 source("03_create_csv_no_extraction.R")
 # If you want to create the csv from xml files
 source("03_create_csv_xml.R")
+
+### Add bring metadata
 # Report in html
 rmarkdown::render("04_report.Rmd", 
                   params = list(report = country_sel),

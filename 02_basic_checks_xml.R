@@ -1,5 +1,5 @@
 
-ths_int<- 0
+ths_int<- 2
 ths_per<- 0.1 
 
 
@@ -7,10 +7,11 @@ ths_per<- 0.1
 library(rio)
 library(tidyverse)
 library(openxlsx)
-library(luispack)
+library(regacc)
+library(dataregacc)
 
 
-df_dt <- luispack::load_xml(folder =  "data/xml",
+df_dt <- regacc::load_xml(folder =  "data/xml",
                          country_sel = country_sel,
                          consolidate = FALSE) %>%
   mutate(NUTS=str_length(ref_area)-2,
@@ -107,7 +108,7 @@ if ("T1300" %in% unique(df_dt$table_identifier)){
 NACE <- df_dt %>%
   filter(table_identifier %in% c("T1002","T1200") & 
            sto %in% c("EMP", "SAL", "B1G", "D1")) %>%
-  check_NACE(ths_abs = ths_int, ths_rel = ths_per)
+  regacc::check_NACE(ths_abs = ths_int, ths_rel = ths_per)
 
 
 # Table 13 ----
@@ -147,7 +148,7 @@ if ("T1300" %in% unique(df_dt$table_identifier)){
 temp<-df_dt %>% 
   filter(unit_measure !="PC")
 
-NUTS<-check_NUTS(temp,ths_abs = 2, ths_rel = 0.1)
+NUTS<-regacc::check_NUTS(temp,ths_abs = ths_int, ths_rel = ths_per)
 
 
 # Negative values ----

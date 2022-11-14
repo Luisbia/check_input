@@ -10,7 +10,7 @@ output:
     fig_height: 7
     theme: cerulean
 params:
-  report: SI
+  report: LU
 ---
 
 ```{r setup, include=FALSE}
