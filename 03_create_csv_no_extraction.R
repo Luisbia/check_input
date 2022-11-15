@@ -1,7 +1,16 @@
 
+file<-list.files(path="data/denodo",
+                  pattern= "_denodo.parquet$",
+                  full.names=TRUE) %>% 
+  as_tibble() %>% 
+  mutate(date=map(value,file.mtime)) %>% 
+  unnest(date) %>% 
+  arrange(desc(date)) %>% 
+  head(1) %>% 
+  select(value) %>% 
+  pull()
 
-
-df_regacc<- arrow::read_parquet("data/denodo/regacc_all.parquet") %>% 
+df_regacc<- arrow::read_parquet(file) %>% 
   filter(country==country_sel & !is.na(obs_value) )
 
 

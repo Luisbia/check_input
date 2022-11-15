@@ -7,6 +7,8 @@ library(rlang)
 library(DT)
 library(data.table)
 library(scales)
+library(dataregacc)
+library(regacc)
 source("utils/palette.R")
 source("utils/theme_shiny.R")
 

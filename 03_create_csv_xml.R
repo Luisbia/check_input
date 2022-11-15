@@ -21,8 +21,19 @@ tem<- regacc::load_xml(folder =  "data/xml",
   mutate(type = "T") %>% 
   select(type,table_identifier,country,ref_area,NUTS,accounting_entry,sto,activity,unit_measure,time_period,obs_value) 
 
-val<- arrow::read_parquet("data/denodo/regacc_all.parquet") %>% 
-  filter(type=="V")
+file<-list.files(path="data/denodo",
+                 pattern= "_denodo.parquet$",
+                 full.names=TRUE) %>% 
+  as_tibble() %>% 
+  mutate(date=map(value,file.mtime)) %>% 
+  unnest(date) %>% 
+  arrange(desc(date)) %>% 
+  head(1) %>% 
+  select(value) %>% 
+  pull()
+
+val<- arrow::read_parquet(file) %>% 
+  filter(type=="V" & country==country_sel)
 
 regacc<- bind_rows(tem,val) %>% 
   filter(country==country_sel)%>% 

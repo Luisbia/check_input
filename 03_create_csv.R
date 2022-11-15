@@ -1,7 +1,9 @@
 
 df_regacc<- regacc::get_denodo()
-arrow::write_parquet(df_regacc,paste0("data/denodo/regacc_all_",format(Sys.time(),"%Y-%m-%d"),".parquet"))
 
+arrow::write_parquet(df_regacc,paste0("data/denodo/",
+                                 format(Sys.time(),"%Y-%m-%d"),
+                                 "_denodo.parquet"))
 df_regacc<- df_regacc %>% 
   filter(country == country_sel & !is.na(obs_value))
 

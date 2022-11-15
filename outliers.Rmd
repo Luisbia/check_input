@@ -7,7 +7,7 @@ output:
     fig_width: 12
     fig_height: 9
 params:
-  country: SI
+  country: DK
   z_score: 1.5
 ---
 
@@ -65,7 +65,7 @@ df<-list.files(path="data/denodo",
   filter(unit_measure!="PC") %>% 
   group_by(type,ref_area, table_identifier, accounting_entry,sto,activity,unit_measure) %>%
   arrange(time_period,.by_group = TRUE) %>% 
-  mutate(gr=round(obs_value/lag(obs_value)*100-100,1)) %>% 
+  mutate(gr=round(obs_value-lag(obs_value),1)) %>% 
   mutate(zscore = (gr - mean(gr, na.rm = TRUE)) / sd(gr, na.rm = TRUE) ) %>% 
   ungroup()
 
