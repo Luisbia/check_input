@@ -6,7 +6,7 @@ library(dataregacc)
 ths_int<- 2
 ths_per<- 0.1 
 
-df_dt<-list.files(path="data/denodo",
+df_dt<-list.files(path="data/csv",
                   pattern= glob2rx(paste0("*",country_sel,"*")),
                   full.names=TRUE) %>% 
   as_tibble() %>% 

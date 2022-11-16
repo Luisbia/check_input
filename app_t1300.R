@@ -19,7 +19,7 @@ source("utils/theme_shiny.R")
 ## import files
 
 ## import files
-df <-list.files(path="data/denodo",
+df <-list.files(path="data/csv",
                 pattern= glob2rx(paste0("*",country_sel,"*")),
                 full.names=TRUE) %>% 
   as_tibble() %>% 

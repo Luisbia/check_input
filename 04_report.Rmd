@@ -49,7 +49,7 @@ options(dplyr.summarise.inform = FALSE)
 
 ```{r data}
 # load the data that includes T and V
-files<-list.files(path="data/denodo",
+files<-list.files(path="data/csv",
            pattern= glob2rx(paste0("*",country_sel,"*")),
            full.names=TRUE) %>% 
   as_tibble() %>% 
@@ -108,11 +108,13 @@ regacc::show_DT()
 ### As in NQR
 
 ```{r NQR}
+temp<- files %>% 
+  filter(type=="T")
 
-t1001c<-regacc::report_completeness (files,"T1001")
-t1002c<-regacc::report_completeness (files,"T1002")
-t1200c<-regacc::report_completeness (files,"T1200")
-t1300c<-regacc::report_completeness (files,"T1300")
+t1001c<-regacc::report_completeness (temp,"T1001")
+t1002c<-regacc::report_completeness (temp,"T1002")
+t1200c<-regacc::report_completeness (temp,"T1200")
+t1300c<-regacc::report_completeness (temp,"T1300")
 
 
 t1001c + t1002c + t1200c + t1300c

@@ -2,7 +2,7 @@ library(data.table)
 library(openxlsx)
 library(tidyverse)
 
-full<-list.files(path="data/denodo",
+full<-list.files(path="data/csv",
                   pattern= glob2rx(paste0("*",country_sel,"*")),
                   full.names=TRUE) %>% 
   as_tibble() %>% 

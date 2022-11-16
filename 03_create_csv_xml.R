@@ -1,6 +1,6 @@
 tem<- regacc::load_xml(folder =  "data/xml",
                           country_sel = country_sel,
-                          consolidate = FALSE) %>%
+                          consolidate = TRUE) %>%
   arrange(date) %>%
   group_by(across(
     c(
@@ -21,25 +21,36 @@ tem<- regacc::load_xml(folder =  "data/xml",
   mutate(type = "T") %>% 
   select(type,table_identifier,country,ref_area,NUTS,accounting_entry,sto,activity,unit_measure,time_period,obs_value) 
 
-file<-list.files(path="data/denodo",
-                 pattern= "_denodo.parquet$",
-                 full.names=TRUE) %>% 
-  as_tibble() %>% 
-  mutate(date=map(value,file.mtime)) %>% 
-  unnest(date) %>% 
-  arrange(desc(date)) %>% 
-  head(1) %>% 
-  select(value) %>% 
-  pull()
+val<- dataregacc::validated %>% 
+  filter(country==country_sel) %>% 
+  mutate(type="V")
 
-val<- arrow::read_parquet(file) %>% 
-  filter(type=="V" & country==country_sel)
+gvagr<- val %>% 
+  filter(unit_measure=="PC")
+
+lasty<- val %>% 
+  filter(table_identifier=="T1001" & time_period>= 2020 & unit_measure=="XDC")# remove GVA in PYP
+
+prevy<- val %>% 
+  filter(table_identifier=="T1200" & time_period< 2020 & NUTS!="3" & activity %in% c("_T","_Z")) %>% # remove GVA in PYP
+  mutate(table_identifier="T1001")
+
+no_t1001<- val %>% 
+  filter(table_identifier!="T1001")
+
+val <- bind_rows(gvagr, lasty, prevy,no_t1001)
+
 
 regacc<- bind_rows(tem,val) %>% 
-  filter(country==country_sel)%>% 
-  filter(!is.na(obs_value))
+  filter(!is.na(obs_value)) %>% 
+  pivot_wider(names_from=type,
+              values_from=obs_value) %>% 
+  mutate(T=coalesce(T,V)) %>% 
+  pivot_longer(cols = c(T,V),
+               names_to="type",
+               values_to="obs_value")
 
-fwrite(regacc,paste0("data/denodo/regacc_",country_sel,"_",format(Sys.time(),"%Y-%m-%d"),".csv"))
+fwrite(regacc,paste0("data/csv/regacc_",country_sel,"_",format(Sys.time(),"%Y-%m-%d"),".csv"))
 # List of countries we want to create files
 # list<- c("AL", "AT", "BE" ,"BG", "CH", "CY", "CZ", "DE", "DK", "EE", "EL", "ES",
 #          "FI", "FR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "ME", "MK", "MT",
@@ -64,6 +75,6 @@ fwrite(regacc,paste0("data/denodo/regacc_",country_sel,"_",format(Sys.time(),"%Y
 l <- ls()
 rm(list = l[sapply(l, function(x) is.data.frame(get(x)))])
 rm(l)
-gc()
+
 
 cat("Done")

@@ -48,7 +48,7 @@ saveRDS(emp_lfs, "data/eurobase/emp_lfs.rds")
 source("utils/palette.R")
 source("utils/theme_report.R")
 
-emp_regacc <-list.files(path="data/denodo",
+emp_regacc <-list.files(path="data/csv",
                 pattern= glob2rx(paste0("*",country_sel,"*")),
                 full.names=TRUE) %>% 
   as_tibble() %>% 

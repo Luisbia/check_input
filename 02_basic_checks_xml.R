@@ -13,7 +13,7 @@ library(dataregacc)
 
 df_dt <- regacc::load_xml(folder =  "data/xml",
                          country_sel = country_sel,
-                         consolidate = FALSE) %>%
+                         consolidate = TRUE) %>%
   mutate(NUTS=str_length(ref_area)-2,
          country=str_sub(ref_area,1,2)) %>% 
   select(date,
