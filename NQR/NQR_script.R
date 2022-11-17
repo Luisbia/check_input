@@ -4,11 +4,11 @@ check_packages()
 
 ### Update data
 update_NQR_data(country_sel="DK",
-                       input_dir = "data/denodo",
-                       output_dir = "NQR")
+                       input_file = "data/denodo/all_primary.parquet",
+                       output_dir = "NQR/data")
 
 ### Create report
 
-report_NQR_revision(dat="NQR/DK_new.csv",
-                    country_sel="DK",
+report_NQR_revision(dat=paste0("NQR/data/",country_sel,".csv"),
+                    country_sel=country_sel,
                     output_dir = "NQR")
