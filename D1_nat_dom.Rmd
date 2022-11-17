@@ -38,7 +38,7 @@ library(dataregacc)
 source("utils/theme_report.R")
 
 
-file <- list.files(path="data/denodo",
+file <- list.files(path="data/csv",
            pattern= glob2rx(paste0("*",country_sel,"*")),
            full.names=TRUE) %>% 
   as_tibble() %>% 
@@ -102,7 +102,7 @@ p <- ggplot(file %>% filter (NUTS=="2" & series =="T1002_T1300"), aes(time_perio
   theme_regacc_line+
 theme(legend.position = "none")+
  scale_y_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1))+
-  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0))+
+  scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0.4))+
   xlab("") + ylab ("")+
   ggtitle ("D1 Table 1002 / D1 table 1300,change")
 

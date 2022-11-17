@@ -31,4 +31,4 @@ l <- ls()
 rm(list = l[sapply(l, function(x) is.data.frame(get(x)))])
 rm(l)
 
-cat("Done")
+cli::cli_alert_success("Done. File created at /revision")

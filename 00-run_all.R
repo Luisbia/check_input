@@ -19,14 +19,17 @@ rmarkdown::render("01_basic_info.Rmd",
                   output_file = paste0("basic_info/",country_sel,"_",format(Sys.time(),"%Y-%m-%d"),"_report.html"))
 
 
-# basic checks, default ths=_abs2,ths_per=0.1
-source("02_basic_checks_xml.R")
+# creates the csv from xml files
+source("02_create_csv_xml.R")
 
-# Extract data from Denodo and create a csv file for the remaining scripts
-source("03_create_csv_no_extraction.R")
+### Add bring metadata (optional)
+bring_files(folder_sel = "U:/03_Regional Accounts/03D_Data Production/2022/metadata",
+            file_sel = "xlsx",
+            country_sel = country_sel,
+            folder_out = "metadata")
 
 # Report in html
-rmarkdown::render("04_report.Rmd", 
+rmarkdown::render("03_report.Rmd", 
                   params = list(report = country_sel),
                   output_file = paste0("report/",
                                        country_sel,"_",
@@ -34,10 +37,10 @@ rmarkdown::render("04_report.Rmd",
                                        "_report.html"))
 
 # Report in excel. Mind the thresholds inside the file
-source("05_basic_checks.R")
+source("04_basic_checks.R")
 
 # Revisions.Mind the thresholds inside the file
-source("06_revision.R")
+source("05_revision.R")
 
 # Outliers
 rmarkdown::render("outliers.Rmd",# new only looks at new data not at not-revised
@@ -49,13 +52,3 @@ rmarkdown::render("outliers.Rmd",# new only looks at new data not at not-revised
 rmarkdown::render("D1_nat_dom.Rmd", #/others
                   params = list(report = country_sel),
                   output_file = paste0("others/",country_sel,"_D1_dom_nat.html"))
-
-
-
-rmarkdown::render("LFS.Rmd",
-                  params = list(report = country_sel),
-                  output_file = paste0("others/",country_sel,"_LFS.html"))
-
-rmarkdown::render("POP.Rmd",
-                  params = list(report = country_sel),
-                  output_file = paste0("others/",country_sel,"_POP.html"))

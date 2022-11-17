@@ -50,7 +50,7 @@ NUTS2021<-luispack::NUTS_2021 %>%
   mutate(country=as.character(country)) %>% 
   droplevels()
 
-df<-list.files(path="data/denodo",
+df<-list.files(path="data/csv",
            pattern= glob2rx(paste0("*",country_sel,"*")),
            full.names=TRUE) %>% 
   as_tibble() %>% 
@@ -123,7 +123,7 @@ df_charts <- temp %>%
                      geom_point(data=.x %>% filter(outlier=="outlier"),aes(time_period,obs_value),size=5,colour="#FFCC00")+
                      facet_wrap(~table_identifier~sto)+
                      theme_regacc_line+
-                     scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0.2))+
+                     scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1),expand=c(0,0.4))+
                      scale_y_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1))+
                      ggtitle(paste0(.y))))
   

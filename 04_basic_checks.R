@@ -1,54 +1,28 @@
-
-ths_int<- 2
-ths_per<- 0.1 
-
-
-# Packages needed
-library(rio)
-library(tidyverse)
+library(data.table)
 library(openxlsx)
+library(tidyverse)
 library(regacc)
 library(dataregacc)
+ths_int<- 2
+ths_per<- 0.2 
 
+df_dt<-list.files(path="data/csv",
+                  pattern= glob2rx(paste0("*",country_sel,"*")),
+                  full.names=TRUE) %>% 
+  as_tibble() %>% 
+  mutate(date=map(value,file.mtime)) %>% 
+  unnest(date) %>% 
+  arrange(desc(date)) %>% 
+  head(1) %>% 
+  select(value) %>% 
+  pull() %>% 
+  fread() %>% 
+  filter(type=="T")
 
-df_dt <- regacc::load_xml(folder =  "data/xml",
-                         country_sel = country_sel,
-                         consolidate = TRUE) %>%
-  mutate(NUTS=str_length(ref_area)-2,
-         country=str_sub(ref_area,1,2)) %>% 
-  select(date,
-         table_identifier,
-         country,
-         ref_area,
-         NUTS,
-         sto,
-         accounting_entry,
-         activity,
-         unit_measure,
-         time_period,
-         obs_value) %>% 
-  arrange(date) %>% 
-  group_by (table_identifier,
-            country,
-            ref_area,
-            NUTS,
-            sto,
-            accounting_entry,
-            activity,
-            unit_measure,
-            time_period) %>% 
-  slice_tail(n=1) %>% 
-  ungroup() %>% 
-  select(-date) %>% 
-  na.omit()
-
-# load the nama data
 nama <- fread("data/denodo/nama.csv") %>% 
-  # change column name
   setnames("obs_value","nama")
-# load the nfsa data
+
 nfsa <- fread("data/denodo/nfsa.csv") %>% 
-  # change column name
   setnames("obs_value","nfsa")
 
 # T1001 external ----
@@ -108,7 +82,7 @@ if ("T1300" %in% unique(df_dt$table_identifier)){
 NACE <- df_dt %>%
   filter(table_identifier %in% c("T1002","T1200") & 
            sto %in% c("EMP", "SAL", "B1G", "D1")) %>%
-  regacc::check_NACE(ths_abs = ths_int, ths_rel = ths_per)
+  check_NACE(ths_abs = ths_int, ths_rel = ths_per)
 
 
 # Table 13 ----
@@ -128,7 +102,7 @@ if ("T1300" %in% unique(df_dt$table_identifier)){
   if (country_sel %in% c("AT","BE","CY","DK","EE","FI","HU","LV","MT","PL","PT","RO","SK")){
     t1300<-t1300 %>% 
       mutate(B_B6N_c=round(B_B5N + C_D61 +  C_D62 + C_D7 - D_D5  - D_D61 - D_D62 - D_D7, digits =0))}
-  
+
   if (country_sel %in% c("BG","CZ","DE","EL","ES","FR","IE","IT","LT","LU","NL","NO","RS","SE","SI")){
     t1300<-t1300 %>% 
       mutate(B_B6N_c=round(B_B5N + C_D62 + C_D7 - D_D5  - D_D61  - D_D7, digits =0))}
@@ -148,20 +122,15 @@ if ("T1300" %in% unique(df_dt$table_identifier)){
 temp<-df_dt %>% 
   filter(unit_measure !="PC")
 
-NUTS<-regacc::check_NUTS(temp,ths_abs = ths_int, ths_rel = ths_per)
-
+NUTS<-check_NUTS(temp,ths_abs = 2, ths_rel = 0.1)
+  
 
 # Negative values ----
 negative <- df_dt %>%
   filter(unit_measure !="PC") %>% 
   pivot_wider(names_from = sto,
-              values_from = obs_value)
-
-if("EMP" %in% names(negative)){
-  negative<-negative %>% 
-  mutate(SELF = EMP - SAL )} 
-
-negative<- negative %>% 
+              values_from = obs_value) %>% 
+  mutate(SELF = EMP - SAL ) %>% 
   mutate(time_period=as.character(time_period)) %>% 
   pivot_longer(cols = c(where(is.numeric)),
                names_to = "sto",
@@ -173,15 +142,9 @@ negative<- negative %>%
 BTEC <- df_dt %>%
   filter(sto %in% c("B1G","D1","EMP","SAL","P51G")& activity %in% c("C", "BTE")) %>% 
   pivot_wider(names_from = sto, 
-              values_from = obs_value)
-
-if("EMP" %in% names(BTEC)){
-  BTEC<-BTEC %>% 
-    mutate(SELF = EMP - SAL )} 
-
-BTEC<- BTEC %>% 
-  mutate(time_period=as.character(time_period)) %>% 
-  pivot_longer(cols = c(where(is.numeric)),
+              values_from = obs_value) %>%
+  mutate(SELF=EMP-SAL) %>% 
+  pivot_longer(cols=c(B1G,D1,EMP,SAL,SELF,P51G),
                names_to="sto",
                values_to="obs_value") %>% 
   pivot_wider(names_from = activity, 
@@ -206,56 +169,56 @@ if("T1001" %in% unique(df_dt$table_identifier) &
     select(-T1001, -T1200) %>% 
     pivot_wider(names_from = unit_measure,
                 values_from = obs_value)
-  
-  
-  vol1<- vol %>% 
-    select(-PC) %>% 
-    filter(NUTS=="1") %>% 
-    mutate(geo1 = substr(ref_area, start = 1, stop = 2)) %>%
-    group_by(country,geo1,time_period) %>%
-    mutate(share=XDC/sum(XDC)) %>% 
-    ungroup() %>% 
-    select(-geo1,-XDC,-NUTS)
-  
-  
-  vol1_temp<- left_join(vol1,vol) %>% 
-    group_by(ref_area) %>% 
-    arrange(time_period,by_group=TRUE) %>% 
-    mutate(agg=PC*lag(share)) %>% 
-    group_by(country,time_period) %>%
-    summarise(agg=sum(agg)) %>% 
-    rename(ref_area=country) %>% 
-    na.omit()
-  
-  vol1 <-  left_join(vol1_temp,vol)
-  
-  vol2<- vol %>% 
-    select(-PC) %>% 
-    filter(NUTS=="2") %>% 
-    mutate(geo2 = substr(ref_area, start = 1, stop = 3)) %>%
-    group_by(country,geo2,time_period) %>%
-    mutate(share=XDC/sum(XDC)) %>% 
-    ungroup() %>% 
-    select(-geo2,-XDC,-NUTS) 
-  
-  vol2_temp<- left_join(vol2,vol) %>% 
-    group_by(ref_area) %>%
-    arrange(time_period,by_group=TRUE) %>% 
-    mutate(agg=PC*lag(share)) %>%
-    mutate(geo2=substr(ref_area, start = 1, stop = 3)) %>% 
-    group_by(geo2,time_period) %>%
-    summarise(agg=sum(agg)) %>% 
-    rename(ref_area=geo2) %>% 
-    na.omit()
-  
-  vol2 <-  left_join(vol2_temp,vol)
-  
-  NUTS_vol<- bind_rows(vol1,vol2) %>% 
-    select(ref_area,time_period,agg,PC) %>% 
-    mutate(agg=round(agg,2),
-           PC=round(PC,2)) %>% 
-    mutate(diff=round(agg-PC,2)) %>% 
-    filter(abs(diff)> 0.05)
+
+
+vol1<- vol %>% 
+  select(-PC) %>% 
+  filter(NUTS=="1") %>% 
+  mutate(geo1 = substr(ref_area, start = 1, stop = 2)) %>%
+  group_by(country,geo1,time_period) %>%
+  mutate(share=XDC/sum(XDC)) %>% 
+  ungroup() %>% 
+  select(-geo1,-XDC,-NUTS)
+
+
+vol1_temp<- left_join(vol1,vol) %>% 
+  group_by(ref_area) %>% 
+  arrange(time_period,by_group=TRUE) %>% 
+  mutate(agg=PC*lag(share)) %>% 
+  group_by(country,time_period) %>%
+  summarise(agg=sum(agg)) %>% 
+  rename(ref_area=country) %>% 
+  na.omit()
+
+vol1 <-  left_join(vol1_temp,vol)
+
+vol2<- vol %>% 
+  select(-PC) %>% 
+  filter(NUTS=="2") %>% 
+  mutate(geo2 = substr(ref_area, start = 1, stop = 3)) %>%
+  group_by(country,geo2,time_period) %>%
+  mutate(share=XDC/sum(XDC)) %>% 
+  ungroup() %>% 
+  select(-geo2,-XDC,-NUTS) 
+
+vol2_temp<- left_join(vol2,vol) %>% 
+  group_by(ref_area) %>%
+  arrange(time_period,by_group=TRUE) %>% 
+  mutate(agg=PC*lag(share)) %>%
+  mutate(geo2=substr(ref_area, start = 1, stop = 3)) %>% 
+  group_by(geo2,time_period) %>%
+  summarise(agg=sum(agg)) %>% 
+  rename(ref_area=geo2) %>% 
+  na.omit()
+
+vol2 <-  left_join(vol2_temp,vol)
+
+NUTS_vol<- bind_rows(vol1,vol2) %>% 
+  select(ref_area,time_period,agg,PC) %>% 
+  mutate(agg=round(agg,2),
+         PC=round(PC,2)) %>% 
+  mutate(diff=round(agg-PC,2)) %>% 
+  filter(abs(diff)> 0.05)
 }
 
 #write file
@@ -322,7 +285,7 @@ if (any(ls() %in% "NUTS_vol")) {
 # cons("BTEC")
 # cons("NUTS_vol")
 
-saveWorkbook(wb, paste0("basic_checks/",country_sel,"_basic_check_xml_",
+saveWorkbook(wb, paste0("basic_checks/",country_sel,"_basic_check_",
                         format(Sys.time(),"%Y-%m-%d"),
                         ".xlsx"), overwrite = TRUE)
 
@@ -330,4 +293,4 @@ l <- ls()
 rm(list = l[sapply(l, function(x) is.data.frame(get(x)))])
 rm(l)
 
-cat("Done")
+cli::cli_alert_success("Done. File created at /basic_checks")
