@@ -4,7 +4,7 @@ library(dataregacc)
 library(regacc)
 check_packages()
 # select country
-country_sel<- "LU"
+country_sel<- "DK"
 
 # bring xml files (/DONE or /INPUT)
 bring_files(folder_sel = "//fame4prod.cc.cec.eu.int/fame-estat/econ/REGACC/DONE",
@@ -78,3 +78,10 @@ rmarkdown::render("LFS.Rmd",
 rmarkdown::render("POP.Rmd",
                   params = list(report = country_sel),
                   output_file = paste0("others/",country_sel,"_POP.html"))
+
+### NQR
+
+source("NQR/NQR_script.R")
+
+### GVA PYP
+source("gva_pyp/gva_pyp.R")

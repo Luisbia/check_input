@@ -36,7 +36,7 @@ library(DT)
 library(data.table)
 library(scales)
 library(rio)
-library(luispack)
+library(regacc)
 
 options(dplyr.summarise.inform = FALSE)
 ```
@@ -44,7 +44,7 @@ options(dplyr.summarise.inform = FALSE)
 ```{r data}
 source("utils/theme_report.R")
 
-NUTS2021<-luispack::NUTS_2021 %>% 
+NUTS2021<-dataregacc::NUTS_2021 %>% 
   filter(country %in% country_sel) %>% 
   mutate(across(c(NUTS,label),as_factor)) %>% 
   mutate(country=as.character(country)) %>% 

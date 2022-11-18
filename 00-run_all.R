@@ -1,8 +1,9 @@
 ## Only scripts and rmarkdown in one go
-
 options(tidyverse.quiet = TRUE)
 library(tidyverse)
-library(luispack)
+library(dataregacc)
+library(regacc)
+check_packages()
 
 # select country
 country_sel<- "DK"
@@ -52,3 +53,10 @@ rmarkdown::render("outliers.Rmd",# new only looks at new data not at not-revised
 rmarkdown::render("D1_nat_dom.Rmd", #/others
                   params = list(report = country_sel),
                   output_file = paste0("others/",country_sel,"_D1_dom_nat.html"))
+
+### NQR
+
+source("NQR/NQR_script.R")
+
+### GVA PYP
+source("gva_pyp/gva_pyp.R")
