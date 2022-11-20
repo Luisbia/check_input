@@ -63,7 +63,7 @@ files<-list.files(path="data/csv",
 .[,NUTS:=as.factor(NUTS)] 
 
 # load the NUTS for the country  
-NUTS2021<-dataregacc::NUTS_2021 %>% 
+NUTS_2021<-dataregacc::NUTS_2021 %>% 
   filter(country %in% country_sel) %>% 
   mutate(across(c(NUTS,label),as_factor)) %>% 
   mutate(country=as.character(country)) %>% 
@@ -124,7 +124,7 @@ t1001c + t1002c + t1200c + t1300c
 
 
 ```{r chart01}
-t1001<- left_join(files, NUTS2021) %>% # join with the NUTS
+t1001<- left_join(files, NUTS_2021) %>% # join with the NUTS
   filter(table_identifier == "T1001" &
            type =="T" &
          sto %in% c("B1G","EMP","POP") &
@@ -150,7 +150,7 @@ plot_heatmap_t1001("POP","Population NUTS 2")
 ```
 
 ```{r chart02}
- temp<- left_join(files, NUTS2021) %>% 
+ temp<- left_join(files, NUTS_2021) %>% 
   filter(table_identifier == "T1001" &
            type =="T" &
            NUTS == "2" &
@@ -178,7 +178,7 @@ ggplotly(ggplot(temp,aes(time_period, fct_rev(ref_area), fill = obs_value)) +
 
 ```{r chart03}
 
-t1200 <- left_join(files,NUTS2021) %>% 
+t1200 <- left_join(files,NUTS_2021) %>% 
   filter(type =="T" &
            label!="Extra-regio" &
           unit_measure %in% c("PS", "XDC") &
@@ -197,7 +197,7 @@ plot_heatmap_t1200("POP","3","Population NUTS 3")
 
 ```{r 04 T1002}
 
-t1002 <- left_join(NUTS2021,files) %>% 
+t1002 <- left_join(NUTS_2021,files) %>% 
   filter(type =="T" & 
          sto %in% c("D1", "P51G","EMP","SAL") &
          unit_measure %in% c("XDC", "HW") &
@@ -218,7 +218,7 @@ plot_heatmap_t1002("SAL",  "Employees (HW)")
 
 ```{r 05 T1300}
 
-t1300 <- left_join(NUTS2021,files) %>% 
+t1300 <- left_join(NUTS_2021,files) %>% 
   filter(type =="T" &
            activity =="_Z" &
          unit_measure =="XDC") %>% 
@@ -532,7 +532,7 @@ ggplotly(temp %>%
 ```{r chart rev t1200}
 temp<- rev %>% 
   filter(NUTS %in% c("0","2","3") & sto %in% c("EMP","SAL","POP","B1G") &
-           activity %in% c("_T","_Z") & unit_measure %in% c("PC","HW"))
+           activity %in% c("_T","_Z") & !unit_measure %in% c("PC","HW"))
 
 if (nrow(temp)>0)
 plot_scatter("Revision T1200")
@@ -580,7 +580,7 @@ out<-out[order(time_period),growth:=round(abs(obs_value/lag(obs_value)*100-100),
   .[,.(ref_area,sto,activity,unit_measure,time_period,NUTS,obs_value,growth)] %>% 
   .[obs_value>10 ] %>% 
   setorder(-obs_value) %>% 
-  left_join(.,NUTS2021) %>% 
+  left_join(.,NUTS_2021) %>% 
   .[label!="Extra-regio"]
 
   if (nrow(out) > 0)

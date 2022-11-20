@@ -4,7 +4,7 @@ library(dataregacc)
 library(regacc)
 check_packages()
 # select country
-country_sel<- "DK"
+country_sel<- "BE"
 
 # bring xml files (/DONE or /INPUT)
 bring_files(folder_sel = "//fame4prod.cc.cec.eu.int/fame-estat/econ/REGACC/DONE",
@@ -26,6 +26,12 @@ bring_files(folder_sel = "U:/03_Regional Accounts/03D_Data Production/2022/metad
             file_sel = "xlsx",
             country_sel = country_sel,
             folder_out = "metadata")
+			
+### Update NAMA and NFSA (optional)
+bring_files(folder_sel = "U:/03_Regional Accounts/03D_Data Production/2022/data/denodo",
+            file_sel = "csv",
+            country_sel = country_sel,
+            folder_out = "data/denodo")
 
 # Report in html
 rmarkdown::render("03_report.Rmd", 

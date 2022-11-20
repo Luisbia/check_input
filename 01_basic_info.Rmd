@@ -74,11 +74,17 @@ data<- left_join(data,NUTS2021)
 
 ```{r}
 # show first and last year reported
-temp<- unique(data[!obs_status %in% c("L","M") & !is.na(obs_value) ,.(first = min(time_period), last = max(time_period)),by =.(table_identifier,country,sto,accounting_entry,unit_measure)])%>% 
-  .[,lapply(.SD, as.factor),] %>% # convert to factors for better filtering
-  droplevels()
-
-show_DT(temp)
+  temp<- data %>% 
+    filter(!obs_status %in% c("L","M") & !is.na(obs_value) ) %>% 
+    select(country,table_identifier,country,sto,accounting_entry,unit_measure, time_period) %>% 
+    group_by(across(-c(time_period))) %>% 
+    mutate(first=min(time_period),
+           last = max(time_period)) %>% 
+    select(-time_period) %>% 
+    unique() %>% 
+    mutate(across(everything(as.factor)))
+	
+	regacc::show_DT(temp)
 ```
 
 ### Embargo dates
@@ -86,10 +92,12 @@ show_DT(temp)
 ```{r}
 # show embargo dates
 if ("embargo_date" %in% colnames(data)){
-  temp<- na.omit(unique(files[,.(table_identifier,country,embargo_date)])) %>% 
-    .[,lapply(.SD, as.factor),] %>% 
-    droplevels() %>% 
-    luispack::show_DT() }
+    temp<- data %>% 
+      select(country,table_identifier,country,embargo_date) %>% 
+      na.omit() %>% 
+      unique() %>% 
+      mutate(across(everything(as.factor))) %>% 
+      droplevels()}
 
 ```
 
@@ -98,24 +106,31 @@ if ("embargo_date" %in% colnames(data)){
 ```{r}
 # show comments in the files
 if ("comment_ts" %in% names(df)) {
-temp<-na.omit(unique(data[comment_ts!="xxx" & comment_ts!="",.(country,table_identifier,comment_ts)])) %>%   
-  .[,lapply(.SD, as.factor),] %>% 
-  droplevels()
-
+    temp<- data %>% 
+      select(country,table_identifier,comment_ts) %>% 
+      filter(comment_ts!="xxx" & comment_ts!="") %>% 
+      na.omit() %>% 
+      unique() %>% 
+      mutate(across(everything(as.factor))) %>% 
+      droplevels()
 if (nrow(temp) > 0)
-  luispack::show_DT(temp) }
+  regacc::show_DT(temp) }
 ```
 
 ### Data not for publication
 
 ```{r}
 # data not for publication, with a flag N
-temp<-na.omit(unique(data[conf_status=="N",.(country,table_identifier,sto,activity,unit_measure,conf_status)]))%>% 
-  .[,lapply(.SD, as.factor),] %>% 
-  droplevels()
+  temp<- data %>% 
+    select(country,table_identifier,sto,activity,unit_measure,conf_status) %>% 
+    filter(conf_status =="N") %>% 
+    na.omit() %>% 
+    unique() %>% 
+    mutate(across(everything(as.factor))) %>% 
+    droplevels() 
 
 if (nrow(temp) > 0)
-  luispack::show_DT(temp) 
+  regacc::show_DT(temp) 
  
 ```
 
@@ -123,10 +138,14 @@ if (nrow(temp) > 0)
 
 ```{r}
 # flags E,P,B,D,U
-temp<-na.omit(unique(data[obs_status %in% c("E","P","B","D","U"),.(country,table_identifier,sto,unit_measure,obs_status,time_period)])) %>% 
-  .[,lapply(.SD, as.factor),] %>% 
-  droplevels()  
+  temp<- data %>% 
+    select(country,table_identifier,sto,unit_measure,obs_status,time_period) %>% 
+    filter(obs_status %in% c("E","P","B","D","U")) %>% 
+    na.omit() %>% 
+    unique() %>% 
+    mutate(across(everything(as.factor))) %>% 
+    droplevels()
 
 if (nrow(temp) > 0)
-  luispack::show_DT(temp) 
+  regacc::show_DT(temp) 
 ```

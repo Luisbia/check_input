@@ -26,17 +26,17 @@ val<- dataregacc::validated %>%
   mutate(type="V")
 
 gvagr<- val %>% 
-  filter(unit_measure=="PC")
+  filter(unit_measure=="PC" & table_identifier=="T1001")
 
 lasty<- val %>% 
-  filter(table_identifier=="T1001" & time_period>= 2020 & unit_measure=="XDC")# remove GVA in PYP
+  filter(table_identifier=="T1001" & time_period>= 2020 & unit_measure !="PC")
 
 prevy<- val %>% 
   filter(table_identifier=="T1200" & time_period< 2020 & NUTS!="3" & activity %in% c("_T","_Z")) %>% # remove GVA in PYP
   mutate(table_identifier="T1001")
 
 no_t1001<- val %>% 
-  filter(table_identifier!="T1001")
+  filter(!table_identifier %in% c("T1001")) # correct in val
 
 val <- bind_rows(gvagr, lasty, prevy,no_t1001)
 
