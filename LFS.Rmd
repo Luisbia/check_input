@@ -94,7 +94,7 @@ p <- ggplot(df, aes(time_period, values, colour = series, label = label))+
   theme_regacc_line+
   scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(accuracy =1))+
   scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(accuracy = 1))+
-    scale_colour_luis()
+    scale_colour_manual(values= c("#0E47CB","#FFCC00"))
 
 ggplotly(p)%>% config(displayModeBar = F)
   
