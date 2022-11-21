@@ -7,7 +7,7 @@ output:
     fig_width: 12
     fig_height: 9
 params:
-  report: AL
+  report: DK
 ---
 
 ```{r setup, include=FALSE}
@@ -61,14 +61,17 @@ pop_regacc <- list.files(path="data/csv",
   pull() %>% 
   fread() %>% 
   mutate(NUTS=as.factor(NUTS)) %>% 
-  filter(sto=="POP" & type=="T") %>% 
+  filter(sto=="POP" & type=="T") 
+
+t1001<- pop_regacc %>% 
+  filter(table_identifier=="T1001" & time_period== 2021)
+
+t1200<- pop_regacc %>% 
+  filter(table_identifier=="T1200" & time_period< 2021)
+
+pop_regacc<- bind_rows(t1001,t1200) %>% 
   select(table_identifier,ref_area,NUTS,time_period,obs_value) %>%
-   pivot_wider(names_from = table_identifier,
-              values_from = obs_value) %>% 
-  mutate(T1001 = coalesce(T1001,T1200)) %>% 
-          select(ref_area, time_period, T1001) %>% 
-  rename (regacc = T1001) %>% 
-  as.data.table()
+  rename (regacc = obs_value) 
   
 
 pop_dem <- readRDS("data/eurobase/pop.rds") %>% 
@@ -92,12 +95,11 @@ df <- left_join(df, NUTS2021)
 
 
 ```{r}
-p <- ggplot(df, aes(time_period, reg_dem, colour= ref_area, label = label))+
-  geom_line(size = 0.7)+
+p <- ggplot(df, aes(time_period, reg_dem, label = label))+
+  geom_line(size = 0.7, colour= "#0E47CB")+
   facet_wrap(~NUTS, scales="free_y")+
   theme_regacc_line+
-  scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(accuracy = 1))+
-  scale_colour_luis()
+  scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(accuracy = 1))
 
 ggplotly(p)%>% config(displayModeBar = F)
   
@@ -118,7 +120,7 @@ df_plots <- df_plots %>%
                        theme_regacc_line+
   scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(),expand=c(0,0.2))+
   scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(),expand=c(0,0.2))+
-  scale_colour_luis()+
+  scale_colour_manual(values=c("#0E47CB", "#FFCC00"))+
     ggtitle(paste0("Geo:", .y)) 
                        ))
 

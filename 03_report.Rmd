@@ -8,8 +8,8 @@ output:
     code_download: true
     toc: yes
     toc_float: no
-    fig_width:  12
-    fig_height: 9
+    fig_width:  11
+    fig_height: 6.6
     theme: cerulean
 params:
   report: DK
@@ -225,7 +225,7 @@ t1300 <- left_join(NUTS_2021,files) %>%
   unite("sto",c(accounting_entry,sto))
 
   if (nrow(t1300) > 0){ # not needed now but maybe useful for future developments
-plot_heatmap_t1300("Household Accounts")
+plot_heatmap_t1300("")
   }
 ```
 
@@ -523,7 +523,7 @@ ggplotly(temp %>%
            scale_colour_ra()+
            scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
            scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
-           ggtitle("Revision Volume"),tooltip="text")
+           ggtitle(""),tooltip="text")
 
 ```
 
@@ -535,7 +535,7 @@ temp<- rev %>%
            activity %in% c("_T","_Z") & !unit_measure %in% c("PC","HW"))
 
 if (nrow(temp)>0)
-plot_scatter("Revision T1200")
+plot_scatter("")
 ```
 
 ###  Revisions Table 1002
@@ -545,7 +545,7 @@ temp<- rev %>%
   filter(NUTS %in% c("0","2") & sto %in% c("D1","P51G","EMP","SAL") & unit_measure !="PS" & activity =="_T" )
 
 if (nrow(temp)>0)
-plot_scatter("Revision T1002")
+plot_scatter("")
 ```
 
 ###  Revisions Table 1300
@@ -555,7 +555,7 @@ temp<- rev %>%
   filter(NUTS %in% c("0","2")  & sto %in% c("B5N","B6N"))
 
 if (nrow(temp)>0)
-plot_scatter("Revision T1300")
+plot_scatter("")
 ```
 
 ##  Series with outliers (> 30% change in revised series )
