@@ -520,7 +520,7 @@ ggplotly(temp %>%
            ggplot(aes(T,V,color=NUTS,label=ref_area))+
            geom_point(aes(text=paste("ref_area:",ref_area,"\n","T:",T,"\n","V:",V,"\n","time_period:",time_period)))+
            theme_regacc_scatter +
-           scale_colour_ra()+
+           scale_colour_ra("primary")+
            scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
            scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
            ggtitle(""),tooltip="text")

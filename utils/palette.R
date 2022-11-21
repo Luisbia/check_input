@@ -1,7 +1,8 @@
-luis_colours <- c('one' = "#AF155C", 
+luis_colours <- c('zero' = "2644A7",
+                  'one' = "#AF155C", 
                   'two' = "#208486",
-                  'three' = "#B39421",
-                  'four' = "#B656BD",
+                  'three' = "#B656BD",
+                  'four' = "#B39421",
                   'five' = "#388AE2",
                   'six' = "#E04040",
                   'seven' = "#33A033",
@@ -34,7 +35,7 @@ luis_cols <- function(...) {
 }
 
 
-luis_palettes <- list('eurostat' = luis_cols("one", "two", "three", "four", "five",
+luis_palettes <- list('eurostat' = luis_cols("zero","one", "two", "three", "four", "five",
                                              "six", "seven", "eight", "nine"),
                       'heat' = luis_cols("red","grey","blue"),
                       'luis' = luis_cols("blue1", "red1", "orange", "green", "grey")
