@@ -4,6 +4,7 @@ library(tidyverse)
 library(regacc)
 library(dataregacc)
 ths_int<- 2
+ths_hw<-100
 ths_per<- 0.2 
 
 df_dt<-list.files(path="data/csv",
@@ -46,9 +47,19 @@ if ("T1002" %in% unique(df_dt$table_identifier)){
   
   t1002_ext <- left_join(t1002_reg, nama) %>% 
     mutate(diff = round(obs_value - nama,1),
-           diffp = round(diff * 100/nama,1)) %>% 
+           diffp = round(diff * 100/nama,1))
+  
+  temp1<- t1002_ext %>% 
+    filter(unit_measure!="HW") %>% 
     filter(abs(diff) >ths_int) %>% 
     filter(abs(diffp) >ths_per)
+  
+  temp2<- t1002_ext %>% 
+    filter(unit_measure=="HW") %>% 
+    filter(abs(diff) >ths_hw) %>% 
+    filter(abs(diffp) >ths_per)
+  
+  t1002_ext<- bind_rows(temp1,temp2)
 }
 # T1200 external ----
 if ("T1200" %in% unique(df_dt$table_identifier)){

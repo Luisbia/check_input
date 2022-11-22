@@ -60,7 +60,7 @@ theme_regacc_scatter <- theme_regacc_line+
                                     face = "italic"),
         axis.title.y = element_text(size = rel(0.9),
                                     colour=light_text,
-                                    angle = 45, 
+                                    angle = 90, 
                                     vjust = 0.5,
                                     face = "italic"),
         legend.position = "right",
