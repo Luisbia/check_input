@@ -1,4 +1,4 @@
-luis_colours <- c('zero' = "2644A7",
+luis_colours <- c('zero' = "#2644A7",
                   'one' = "#AF155C", 
                   'two' = "#208486",
                   'three' = "#B656BD",

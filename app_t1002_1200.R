@@ -14,7 +14,7 @@
  library(data.table)
  library(scales)
  source("utils/palette.R")
- source("utils/theme_shiny.R")
+ source("utils/theme_report.R")
 
 # Data manipulation----
  ## import files
@@ -505,7 +505,7 @@ server <- function(input, output) {
     # Build  plot
     p <- ggplot(df_filter(), aes(time_period, obs_value, group=!!parse_expr(input$group),colour = !!parse_expr(input$colour),  label = label)) +
       geom_line(size = 0.8)+
-      theme_shiny_line+
+      theme_regacc_line+
       scale_colour_luis()+
       scale_y_continuous(breaks = pretty_breaks(3), labels = label_number(),expand=c(0,0.2)) +
       scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0,0.2))
@@ -548,7 +548,7 @@ server <- function(input, output) {
     p1 <- ggplot(df_filter1(), aes(x = fct_reorder(!!parse_expr(input$xaxis1), !!parse_expr(input$yaxis1)), y = !!parse_expr(input$yaxis1), colour = !!parse_expr(input$colour1), label = label)) +
       geom_point(size= 2) +
       coord_flip() +
-      theme_shiny_scatter +
+      theme_regacc_scatter +
       scale_colour_luis()+
       scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))
     
@@ -589,7 +589,7 @@ server <- function(input, output) {
     # Build  plot
     p2 <- ggplot(df_filter2(), aes(!!parse_expr(input$xaxis2), !!parse_expr(input$yaxis2), colour = !!parse_expr(input$colour2), label = label)) +
       geom_point(size= 2) +
-      theme_shiny_scatter +
+      theme_regacc_scatter +
       scale_colour_luis() +
       scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))+
       scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))
@@ -629,7 +629,7 @@ server <- function(input, output) {
     # Build  plot
     p2b <- ggplot(df_filter2b(), aes(obs_value, growth, colour = !!parse_expr(input$colour2b), label = label)) +
       geom_point(size= 2) +
-      theme_shiny_scatter +
+      theme_regacc_scatter +
       scale_colour_luis() +
       scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))+
       scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))

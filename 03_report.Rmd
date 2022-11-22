@@ -93,33 +93,6 @@ source("utils/theme_report.R")
 knitr::include_graphics("eurostat_new.PNG")
 ```
 
-## Metadata
-
-```{r known_issues}
-# load issues found in previous transmissions + useful things to know
-rio::import(paste0("metadata/",country_sel,"_reg_metadata.xlsx"),
-            sheet="metadata") %>% 
-regacc::show_DT()
-```
-
-
-## Completeness 
-
-### As in NQR
-
-```{r NQR}
-temp<- files %>% 
-  filter(type=="T")
-
-t1001c<-regacc::report_completeness (temp,"T1001")
-t1002c<-regacc::report_completeness (temp,"T1002")
-t1200c<-regacc::report_completeness (temp,"T1200")
-t1300c<-regacc::report_completeness (temp,"T1300")
-
-
-t1001c + t1002c + t1200c + t1300c
-```
-
 ### Table 1001
 
 
@@ -180,6 +153,7 @@ ggplotly(ggplot(temp,aes(time_period, fct_rev(ref_area), fill = obs_value)) +
 
 t1200 <- left_join(files,NUTS_2021) %>% 
   filter(type =="T" &
+		 table_identifier =="T1200" &
            label!="Extra-regio" &
           unit_measure %in% c("PS", "XDC") &
           sto %in% c ("B1G","EMP","SAL","POP")) %>% 
@@ -199,6 +173,7 @@ plot_heatmap_t1200("POP","3","Population NUTS 3")
 
 t1002 <- left_join(NUTS_2021,files) %>% 
   filter(type =="T" & 
+         table_identifier =="T1002" &
          sto %in% c("D1", "P51G","EMP","SAL") &
          unit_measure %in% c("XDC", "HW") &
          activity !="_Z" &
@@ -220,6 +195,7 @@ plot_heatmap_t1002("SAL",  "Employees (HW)")
 
 t1300 <- left_join(NUTS_2021,files) %>% 
   filter(type =="T" &
+		 table_identifier=="T1300" &
            activity =="_Z" &
          unit_measure =="XDC") %>% 
   unite("sto",c(accounting_entry,sto))
@@ -229,266 +205,6 @@ plot_heatmap_t1300("")
   }
 ```
 
-##  External consistency
-
-### NAMA
-
-```{r 06 nama}
- temp <- files %>%
-  filter(NUTS =="0" & 
-         type=="T") %>% 
-  select(-NUTS) %>% 
-  left_join(.,nama) %>% 
-  na.omit() %>% 
-  mutate(diff=round(obs_value-nama,1))
-
-temp1<- temp %>% 
-  filter(unit_measure =="PC") %>% 
-  filter(abs(diff)>0.1)
- 
-temp2 <- temp %>% 
-  filter(unit_measure %in% c("XDC", "PS")) %>% 
-  filter(abs(diff)>2)
-
-temp3 <- temp %>% 
-  filter(unit_measure == "HW") %>% 
-  filter(abs(diff)>100)
-
-temp<- bind_rows(temp1,temp2,temp3) %>% 
-  mutate(across(where(is.character),as.factor))
-
-# exceptions we know. For Poland for B1G,D1 and P51G we only check the total NACE
-if ("PL" %in% files$country) {
-  temp1<- temp %>%
-  filter(activity  %in% c ("_T") & sto %in% c("B1G","D1", "P51G"))
-
-  temp2 <- temp %>%
-    filter (!sto %in% c("B1G", "D1", "P51G"))
-
-  temp<- bind_rows (temp1,temp2)
-  rm(temp1,temp2)
-}
-
-  if (nrow(temp) > 0)
-regacc::show_DT(temp) 
-
-
-```
-
-### NFSA
-
-```{r nfsa}
-temp <- files %>%
-  filter(NUTS =="0" & type =="T") %>% 
-  select(-NUTS) %>% 
-  left_join(.,nfsa) %>% 
-  na.omit() %>% 
-  mutate(diff=round(obs_value-nfsa,1))%>% 
-  filter(abs(diff)>2) %>% 
-  mutate(across(where(is.character),as.factor))
-
-#exceptions
-if ("PL" %in% files$country) {
-   temp<- temp %>% 
-   filter(sto!="D7")}
-
-if ("IT" %in% files$country) {
-   temp<- temp %>% 
-   filter(!sto%in% c("D61", "D62"))}
-
-  if (nrow(temp) > 0)
-regacc::show_DT(temp) 
-```
-
-##  NACE aggregation
-
-```{r 09 NACE agg}
-temp <- files %>%
-    filter(activity!="_Z" &
-           !unit_measure %in% c("PC","HW")& # we exclude hours worked because we use a higher theshold
-            type =="T") %>% 
-  check_NACE(ths_abs = 2, ths_rel = 0.1)
-
-    temp1 <- files %>%
-    filter(activity!="_Z" &
-           unit_measure %in% c("HW") &
-             type=="T") %>% 
-    check_NACE(ths_abs = 100, ths_rel = 0.1)
-    
-    temp<- bind_rows(temp,temp1)%>% 
-  mutate(across(where(is.character),as.factor))
-    
-  if (nrow(temp) > 0)
-regacc::show_DT(temp) 
-```
-
-##  HH aggregation
-
-```{r 10 HH_agg}
-# we use three rules for B.6N depending on whether C.D61 and D.62 is reported
-# a different one would be needed for HR
-
-temp <- files %>%
-   filter(activity =="_Z" &
-         unit_measure =="XDC" &
-           type =="T") %>% 
-  select(-activity,-unit_measure) %>% 
-  unite("sto",c(accounting_entry,sto)) %>% 
-   na.omit() %>% 
-   pivot_wider(names_from=sto, 
-               values_from=obs_value) %>%
-    mutate(
-    B_B5N_c = round(B_B2A3N + C_D1 + C_D4 - D_D4, digits = 0),
-    B_B5N_d = round(B_B5N_c - B_B5N, digits = 0))
-
-  if (country_sel %in% c("AT","BE","CY","DK","EE","FI","HU","LV","MT","PL","PT","RO","SK")){
-    temp<-temp %>% 
-      mutate(B_B6N_c=round(B_B5N + C_D61 +  C_D62 + C_D7 - D_D5  - D_D61 - D_D62 - D_D7, digits =0))}
-
-  if (country_sel %in% c("BG","CZ","DE","EL","ES","FR","IE","IT","LT","LU","NL","NO","RS","SE","SI")){
-    temp<-temp %>% 
-      mutate(B_B6N_c=round(B_B5N + C_D62 + C_D7 - D_D5  - D_D61  - D_D7, digits =0))}
-  
-  if (country_sel %in% c("HR")){
-    temp<-temp %>% 
-      mutate(B_B6N_c=round(B_B5N + C_D61 +  C_D62 + C_D7 - D_D5  - D_D61 - D_D7, digits =0))}
-  
-  temp<- temp %>% 
-    mutate(B_B6N_d = round(B_B6N_c - B_B6N, digits = 0)) %>% 
-    filter(if_any(ends_with("_d"), ~ abs(.x) > 3)) %>% 
-  mutate(across(where(is.character),as.factor))
- 
-
-  if (nrow(temp) > 0)
-regacc::show_DT(temp) 
-```
-
-##  NUTS aggregation
-
-```{r 11 NUTS}
-   temp<-files %>% 
-  filter(type=="T" & unit_measure !="PC")
-
-  NUTS<-check_NUTS(temp,ths_abs = 2, ths_rel = 0.1)
-    
-if (nrow(NUTS) > 0)
-  regacc::show_DT(NUTS) 
- 
-```
-
-##  Negative values and NACE C < BTE
-
-```{r 12 minor_checks}
-
-temp<- files %>% 
-  filter(type =="T" & sto %in% c("EMP","SAL") & table_identifier %in% c("T1002","T1200")) %>% 
-       pivot_wider(names_from = sto,
-                   values_from = obs_value) %>% 
-       mutate(SELF = round(EMP - SAL,1) ) %>% 
-  select(-EMP,-SAL) %>% 
-  rename(obs_value=SELF) %>% 
-  mutate(sto="SELF")
-
-temp <- bind_rows(files,temp) %>%
-  filter(type=="T" & unit_measure!="PC") %>% 
-        mutate(time_period=as.character(time_period)) %>% 
-       na.omit() %>% 
-       filter(obs_value < 0) %>% 
-   mutate(across(where(is.character),as.factor))
-
-  if (nrow(temp) > 0)
-regacc::show_DT(temp) 
-
-    temp <- files %>%
-       filter(activity %in% c("C", "BTE") & type =="T") %>%
-       pivot_wider(names_from = sto,
-                   values_from = obs_value) %>% 
-       mutate(SELF = round(EMP - SAL,1) ) %>% 
-      pivot_longer(cols = c(D1,P51G,EMP,SAL,B1G,SELF),
-            names_to = "sto",
-            values_to="obs_value") %>% 
-       pivot_wider(names_from = activity, 
-                   values_from = obs_value) %>%
-       mutate(check = round(BTE - C, digits=1)) %>%
-       filter(check < 0) %>% 
-  mutate(across(where(is.character),as.factor))
-
-  if (nrow(temp) > 0)
-regacc::show_DT(temp) 
-```
-
-##  Volume additivity
-
-```{r 13 volume}
-  vol<- files %>% 
-    filter( NUTS !="3" &
-              unit_measure %in% c("XDC","PC") &
-              activity=="_T" &
-              sto =="B1G" &
-              type=="T") %>% 
-    select(table_identifier,NUTS,country,ref_area,time_period,unit_measure,obs_value) %>% 
-    pivot_wider (names_from = table_identifier,
-                 values_from = obs_value) %>% 
-    mutate(obs_value = coalesce(T1001,T1200)) %>% 
-    select(-T1001, -T1200) %>% 
-    pivot_wider(names_from = unit_measure,
-                values_from = obs_value)
-
-
-vol1<- vol %>% 
-  select(-PC) %>% 
-  filter(NUTS=="1") %>% 
-  mutate(geo1 = substr(ref_area, start = 1, stop = 2)) %>%
-  group_by(country,geo1,time_period) %>%
-  mutate(share=XDC/sum(XDC)) %>% 
-  ungroup() %>% 
-  select(-geo1,-XDC,-NUTS) 
-  
-vol1_temp<- left_join(vol1,vol) %>% 
-  group_by(ref_area) %>% 
-    arrange(time_period,by_group=TRUE) %>% 
-  mutate(agg=PC*lag(share)) %>% 
-  group_by(country,time_period) %>%
-  summarise(agg=sum(agg)) %>% 
-  rename(ref_area=country) %>% 
-  na.omit()
-
-vol1 <-  left_join(vol1_temp,vol)
-
-vol2<- vol %>% 
-  select(-PC) %>% 
-  filter(NUTS=="2") %>% 
-  mutate(geo2 = substr(ref_area, start = 1, stop = 3)) %>%
-  group_by(country,geo2,time_period) %>%
-  mutate(share=XDC/sum(XDC)) %>% 
-  ungroup() %>% 
-  select(-geo2,-XDC,-NUTS)
-
-vol2_temp<- left_join(vol2,vol) %>% 
-  group_by(ref_area) %>%
-  arrange(time_period,by_group=TRUE) %>% 
-  mutate(agg=PC*lag(share)) %>%
-  mutate(geo2=substr(ref_area, start = 1, stop = 3)) %>% 
-  group_by(geo2,time_period) %>%
-  summarise(agg=sum(agg)) %>% 
-   rename(ref_area=geo2) %>% 
-  na.omit()
-
-vol2 <-  left_join(vol2_temp,vol)
-
-temp<- bind_rows(vol1,vol2) %>% 
-  select(ref_area,time_period,agg,PC) %>% 
-  mutate(agg=round(agg,2),
-         PC=round(PC,2)) %>% 
-  mutate(diff=round(agg-PC,2)) %>% 
-  filter(abs(diff)> 0.05) %>% 
-  mutate(across(where(is.character),as.factor))
-
-rm(vol1,vol2)
-
-if (nrow(temp) > 0)
-regacc::show_DT(temp) 
-```
 
 ```{r data revision}
 

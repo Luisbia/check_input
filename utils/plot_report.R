@@ -77,7 +77,7 @@ ggplotly(temp %>%
            geom_point(aes(text=paste("ref_area:",ref_area,"\n","rev:",rev,"\n","revp:",revp,"\n","time_period:",time_period)))+
            facet_wrap(~sto, scales="free")+
            theme_regacc_scatter +
-           scale_colour_manual(values= c("#AF155C","#208486","#B39421"))+
+           scale_colour_manual(values= c("#0E47CB","#FFCC00","#AF155C"))+
            scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
            scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
            ggtitle(title),tooltip="text")
