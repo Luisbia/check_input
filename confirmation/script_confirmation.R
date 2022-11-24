@@ -27,24 +27,19 @@ b1gq<- df %>%
 
 data<- bind_rows(b1g_emp,pop,b1gq) %>% 
   left_join(.,dataregacc::NUTS_2021) %>% 
-  select(country,ref_area,label,NUTS,sto,time_period,obs_value,obs_status) %>% 
+  #select(country,ref_area,label,NUTS,sto,time_period,obs_value,obs_status) %>% 
+  select(country,ref_area,label,NUTS,sto,time_period,obs_value) %>% 
   mutate(obs_value=janitor::round_half_up(obs_value,2)) %>% 
-  mutate(obs_status=str_remove_all(obs_status,"00"),
-         obs_status=str_replace_all(obs_status,"F0","P"),
-         obs_status=str_replace_all(obs_status,"G0","E"),
-         obs_status=str_replace_all(obs_status,"Q0","B"),
-         obs_status=str_replace_all(obs_status,"J0","D"),
-         obs_status=str_replace_all(obs_status,"D0","U")) %>%
-  unite("obs_value",c(obs_value,obs_status),sep=" ") %>% 
+  # mutate(obs_status=str_remove_all(obs_status,"00"),
+  #        obs_status=str_replace_all(obs_status,"F0","P"),
+  #        obs_status=str_replace_all(obs_status,"G0","E"),
+  #        obs_status=str_replace_all(obs_status,"Q0","B"),
+  #        obs_status=str_replace_all(obs_status,"J0","D"),
+  #        obs_status=str_replace_all(obs_status,"D0","U")) %>%
+  # unite("obs_value",c(obs_value,obs_status),sep=" ") %>% 
   pivot_wider(names_from = time_period,
               values_from = obs_value)%>% 
   arrange(sto,ref_area)
-
-final_flags <- df %>% 
-  select(-values) %>% 
-  pivot_wider(names_from = time,
-              values_from = flags)%>% 
-  arrange(na_item,geo)
 
 #write file
 
