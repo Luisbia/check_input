@@ -487,7 +487,14 @@ ui <- fluidPage(theme = shinytheme("flatly"),
 # Shiny server----
 
 server <- function(input, output) {
+  regions <- reactive({
+    filter(df, NUTS == input$NUTS)
+  })
   
+  observeEvent(regions(), {
+    choices <- unique(regions()$ref_area)
+    updateSelectInput(inputId = "ref_area", choices = choices,selected=choices) 
+  })
 
   df_filter <- reactive({df %>%
       filter(ref_area %in% input$ref_area &
@@ -529,7 +536,14 @@ server <- function(input, output) {
     ggplotly(p)%>% config(displayModeBar = F)#, width = 800, height = 800)
   } )
   
-
+  regions1 <- reactive({
+    filter(df_dotplot, NUTS == input$NUTS1)
+  })
+  
+  observeEvent(regions1(), {
+    choices <- unique(regions1()$ref_area)
+    updateSelectInput(inputId = "ref_area1", choices = choices,selected=choices) 
+  })
 
     df_filter1 <- reactive(df_dotplot %>%
                            filter(ref_area %in% input$ref_area1 &
@@ -573,7 +587,15 @@ server <- function(input, output) {
     ggplotly(p1)%>% config(displayModeBar = F)#, width = 800, height = 800)
   } )
   
- 
+  regions2 <- reactive({
+    filter(df_scatter, NUTS == input$NUTS2)
+  })
+  
+  observeEvent(regions2(), {
+    choices <- unique(regions2()$ref_area)
+    updateSelectInput(inputId = "ref_area2", choices = choices,selected=choices) 
+  })
+  
   df_filter2 <- reactive({df_scatter %>%
       filter(ref_area %in% input$ref_area2 &
                time_period >= input$time_period2[1] &
@@ -614,7 +636,15 @@ server <- function(input, output) {
     # pass the plot to ggplotly and choose dimensions
     ggplotly(p2)%>% config(displayModeBar = F)#, width = 800, height = 800)
   } )
+  regions2b <- reactive({
+    filter(df_scatterb, NUTS == input$NUTS2b)
+  })
   
+  observeEvent(regions2b(), {
+    choices <- unique(regions2b()$ref_area)
+    updateSelectInput(inputId = "ref_area2b", choices = choices,selected=choices) 
+  })
+   
   df_filter2b <- reactive({df_scatterb %>%
       filter(ref_area %in% input$ref_area2b &
                time_period >= input$time_period2b[1] &
@@ -657,6 +687,14 @@ server <- function(input, output) {
 
   
   # prepare data frame for table (only values, no derived indicators)
+  regions5 <- reactive({
+    filter(df_data, NUTS == input$NUTS5)
+  })
+  
+  observeEvent(regions5(), {
+    choices <- unique(regions5()$ref_area)
+    updateSelectInput(inputId = "ref_area5", choices = choices,selected=choices) 
+  })
   df_filter5 <- reactive({df_data %>%
       filter(ref_area %in% input$ref_area5 &
                NUTS %in% input$NUTS5 &
