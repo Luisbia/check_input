@@ -1,0 +1,81 @@
+font <- "MS Sans Serif"
+dark_text <- "#262B38"
+mid_text <- "#51555F"
+light_text<- "#7C7F87"
+theme_regacc_line <- theme_minimal (base_size = 12)+
+  theme(text = element_text(colour = mid_text, family = font, lineheight = 1.1),
+        plot.background = element_rect(fill= "#FFFFFF", 
+                                       colour = light_text),
+        panel.background = element_rect(fill= "#F3F6FC", 
+                                        colour = light_text),
+        panel.grid.major.y = element_line(colour="#D4D5D7"),
+        axis.line.x = element_line(colour=light_text),
+        axis.line.y = element_line(colour=light_text),
+        axis.text.x = element_text(family = font,
+                                   size = rel(1.0),
+                                   color = mid_text),
+        axis.text.y= element_text(family = font,
+                                  size = rel(1.0),
+                                  color = mid_text),
+        axis.ticks = element_line(size =rel(1.0),
+                                  colour = dark_text),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = "right",
+        legend.title = element_blank(),
+        legend.key = ggplot2::element_blank(),
+        legend.background =  ggplot2::element_blank(),
+        legend.text =element_text(family = font,
+                                  size = rel(1.0),
+                                  color = light_text),
+        plot.title = element_text(family = font,
+                                  size = rel(1.2),
+                                  face = "bold",
+                                  color = dark_text,
+                                  margin = margin(12, 0, 8, 0)),
+        strip.background = element_rect(fill = "#F3F6FC", 
+                                        colour = NA),
+        strip.text = element_text(size = rel(1.4), hjust = 0.1, color=mid_text,face="bold", family=font),
+        strip.placement = "outside",
+        panel.spacing = unit(2, "lines")
+  )
+
+theme_regacc_scatter <- theme_regacc_line+
+  theme(panel.grid.major.x = element_line(colour="#D4D5D7"),
+        axis.line.x = element_line(colour=light_text, 
+                                   size =rel(1.0)),
+        axis.line.y = element_line(colour=light_text, 
+                                   size= rel(1.0)),
+        axis.text.x = element_text(colour=light_text, 
+                                   size =rel (0.8)),
+        axis.text.y= element_text(colour=light_text, 
+                                  size= rel(1.0), 
+                                  hjust=0),
+        axis.ticks = element_line(size =rel(1.0),
+                                  colour=dark_text),
+        axis.title.x = element_text(size = rel(0.9),
+                                    colour=light_text,
+                                    angle = 0, 
+                                    vjust = 0.5,
+                                    face = "italic"),
+        axis.title.y = element_text(size = rel(0.9),
+                                    colour=light_text,
+                                    angle = 90, 
+                                    vjust = 0.5,
+                                    face = "italic"),
+        legend.position = "right",
+         )
+
+theme_regacc_heatmap <- theme_regacc_line + 
+  theme(axis.title = element_blank(), #axis titles
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.x = element_text(colour = light_text, size = rel(0.8)),
+        axis.text.y = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position="right",
+        axis.ticks = element_blank(),
+        panel.background = element_rect(fill= "#FFFFFF", 
+                                        colour = light_text))
+

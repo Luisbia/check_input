@@ -5,9 +5,6 @@ library(openxlsx)
 library(data.table)
 
 
-
-country_sel<- "DK"
-
 ### National data
 nat_nama <- fread("gva_pyp/NAMA.csv", header=TRUE) %>% 
   mutate(across(everything(),as.character)) %>% 

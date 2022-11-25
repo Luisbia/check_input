@@ -56,7 +56,7 @@ shiny_t1001(country_sel)
 
 shiny_t1002_1200 <- function(country_sel) {
   .GlobalEnv$country_sel <- country_sel
-  shiny::runApp("app_t1002_1200.R", launch.browser = TRUE)
+  shiny::runApp("app_t1002_1200_new.R", launch.browser = TRUE)
 }
 shiny_t1002_1200(country_sel)
 
