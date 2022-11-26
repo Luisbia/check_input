@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--Created with SDMX Converter v8.4.5.1-->
+<message:CompactData xmlns:ns1="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=ESTAT:NA_REG(4.0):compact" xmlns:common="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/common" xmlns:message="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xml="http://www.w3.org/XML/1998/namespace">
+  <message:Header>
+    <message:ID>IREF123</message:ID>
+    <message:Test>false</message:Test>
+    <message:Prepared>2022-01-11T10:06:22Z</message:Prepared>
+    <message:Sender id="IS4STAT"/>
+    <message:KeyFamilyRef>NA_REG</message:KeyFamilyRef>
+    <message:KeyFamilyAgency>ESTAT</message:KeyFamilyAgency>
+    <message:DataSetID>NA_REG</message:DataSetID>
+    <message:DataSetAction>Information</message:DataSetAction>
+  </message:Header>
+  <ns1:DataSet COMMENT_DSET="Excel Template V2018-05" action="Information">
+  <ns1:Series FREQ="A" REF_AREA="DED2" COUNTERPART_AREA="W2" REF_SECTOR="S1" COUNTERPART_SECTOR="S1" ACCOUNTING_ENTRY="_Z" STO="POP" ACTIVITY="_Z" VALUATION="_Z" PRICES="_Z" UNIT_MEASURE="PS" TRANSFORMATION="N" REF_PERIOD_DETAIL="C" TIME_FORMAT="P1Y" DECIMALS="0" TABLE_IDENTIFIER="T1001" UNIT_MULT="3" LAST_UPDATE="2018-07-24T00:00:00" COMMENT_TS="Population in thousands of persons">
+    <ns1:Obs TIME_PERIOD="2020" OBS_VALUE="1593.227" OBS_STATUS="A" CONF_STATUS="F"/>
+  </ns1:Series>
+  <ns1:Series FREQ="A" REF_AREA="DED" COUNTERPART_AREA="W2" REF_SECTOR="S1" COUNTERPART_SECTOR="S1" ACCOUNTING_ENTRY="_Z" STO="POP" ACTIVITY="_Z" VALUATION="_Z" PRICES="_Z" UNIT_MEASURE="PS" TRANSFORMATION="N" REF_PERIOD_DETAIL="C" TIME_FORMAT="P1Y" DECIMALS="0" TABLE_IDENTIFIER="T1001" UNIT_MULT="3" LAST_UPDATE="2018-07-24T00:00:00" COMMENT_TS="Population in thousands of persons">
+    <ns1:Obs TIME_PERIOD="2020" OBS_VALUE="4064.456" OBS_STATUS="A" CONF_STATUS="F"/>
+  </ns1:Series>
+  <ns1:Series FREQ="A" REF_AREA="DED5" COUNTERPART_AREA="W2" REF_SECTOR="S1" COUNTERPART_SECTOR="S1" ACCOUNTING_ENTRY="_Z" STO="POP" ACTIVITY="_Z" VALUATION="_Z" PRICES="_Z" UNIT_MEASURE="PS" TRANSFORMATION="N" REF_PERIOD_DETAIL="C" TIME_FORMAT="P1Y" DECIMALS="0" TABLE_IDENTIFIER="T1001" UNIT_MULT="3" LAST_UPDATE="2018-07-24T00:00:00" COMMENT_TS="Population in thousands of persons">
+    <ns1:Obs TIME_PERIOD="2020" OBS_VALUE="1051.173" OBS_STATUS="A" CONF_STATUS="F"/>
+  </ns1:Series>
+  <ns1:Series FREQ="A" REF_AREA="DED4" COUNTERPART_AREA="W2" REF_SECTOR="S1" COUNTERPART_SECTOR="S1" ACCOUNTING_ENTRY="_Z" STO="POP" ACTIVITY="_Z" VALUATION="_Z" PRICES="_Z" UNIT_MEASURE="PS" TRANSFORMATION="N" REF_PERIOD_DETAIL="C" TIME_FORMAT="P1Y" DECIMALS="0" TABLE_IDENTIFIER="T1001" UNIT_MULT="3" LAST_UPDATE="2018-07-24T00:00:00" COMMENT_TS="Population in thousands of persons">
+    <ns1:Obs TIME_PERIOD="2020" OBS_VALUE="1420.056" OBS_STATUS="A" CONF_STATUS="F"/>
+  </ns1:Series>
+</ns1:DataSet>
+</message:CompactData>

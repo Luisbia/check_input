@@ -3,9 +3,9 @@ library(openxlsx)
 library(tidyverse)
 library(regacc)
 library(dataregacc)
-ths_int<- 2
+ths_int<- 1
 ths_hw<-100
-ths_per<- 0.2 
+ths_per<- 0.1 
 
 df_dt<-list.files(path="data/csv",
                   pattern= glob2rx(paste0("*",country_sel,"*")),
@@ -92,10 +92,15 @@ if ("T1300" %in% unique(df_dt$table_identifier)){
 
 NACE1 <- df_dt %>%
   filter(table_identifier %in% c("T1002","T1200") & 
-           sto %in% c("EMP", "SAL", "B1G", "D1")) %>%
+           sto %in% c("EMP", "SAL", "B1G", "D1") & unit_measure !="HW") %>% 
   check_NACE(ths_abs = ths_int, ths_rel = ths_per)
 
-NACE2<- df_dt %>% 
+NACE2 <- df_dt %>%
+  filter(table_identifier %in% c("T1002") & 
+           sto %in% c("EMP", "SAL") & unit_measure =="HW") %>% 
+  check_NACE(ths_abs = ths_int, ths_rel = ths_hw)
+
+NACE3<- df_dt %>% 
   filter(table_identifier %in% c("T1002","T1200") & 
            sto %in% c("EMP", "SAL", "B1G", "D1")) %>%
   mutate(activity=str_replace_all(activity,"_T","TOTAL")) %>%
@@ -120,7 +125,7 @@ NACE2<- df_dt %>%
   dplyr::filter(if_any(ends_with("_d"), ~ abs(.x) > ths_int)) %>%
   dplyr::filter(if_any(ends_with("_dp"), ~ abs(.x) > ths_per))
 
-NACE<- bind_rows(NACE1,NACE2)
+NACE<- bind_rows(NACE1,NACE2,NACE3)
 # Table 13 ----
 if ("T1300" %in% unique(df_dt$table_identifier)){
   
@@ -149,17 +154,23 @@ if ("T1300" %in% unique(df_dt$table_identifier)){
   
   t1300<- t1300 %>% 
     mutate(B_B6N_d = round(B_B6N_c - B_B6N, digits = 0)) %>% 
-    filter(if_any(ends_with("_d"), ~ abs(.x) > 3))}
+    filter(if_any(ends_with("_d"), ~ abs(.x) > ths_int))}
 
 #
 
 
 ### NUTS ----
 temp<-df_dt %>% 
-  filter(unit_measure !="PC")
+  filter(!unit_measure %in% c("PC","HW"))
 
-NUTS<-check_NUTS(temp,ths_abs = 2, ths_rel = 0.1)
-  
+NUTS1<-check_NUTS(temp,ths_abs = ths_int, ths_rel = ths_per)
+
+temp<-df_dt %>% 
+  filter(!unit_measure %in% c("HW"))
+
+NUTS2<-check_NUTS(temp,ths_abs = ths_hw, ths_rel = ths_per)
+
+NUTS<- bind_rows(NUTS1,NUTS2)
 
 # Negative values ----
 negative <- df_dt %>%
