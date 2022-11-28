@@ -73,3 +73,11 @@ source("NQR/NQR_script.R")
 
 ### GVA PYP ----
 source("gva_pyp/gva_pyp.R")
+
+### Overview
+
+rmarkdown::render("overview/main_indicators.Rmd", 
+                  params = list(report = country_sel),
+                  output_file = paste0(country_sel,"_",
+                                       "_main_indicators.html"))
+

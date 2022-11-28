@@ -1,20 +1,18 @@
 ---
-title: 'REGACC Production Process: a practical guide, 2022'
+title: "REGACC Production Process: a practical guide, 2022"
 author: "Luis Biedma"
 date: "`r Sys.Date()`"
-output:
-  word_document:
-    toc: yes
-    toc_depth: '4'
-  pdf_document:
-    toc: yes
+output: 
+  html_document:
+    toc: true
     toc_depth: 4
+    collapsed: true
+    toc_float: true
+    theme: readable
     highlight: monochrome
     df_print: paged
-geometry: margin=1in
-fontfamily: Raleway
-fontsize: 11pt
-editor_options:
+    code_download: true
+editor_options: 
   chunk_output_type: console
 ---
 <style type="text/css">
@@ -848,7 +846,7 @@ plot_heatmap_t1200("B1G","3","Value Added NUTS 3")
 
 ### Revisions
 
-The report includes and aggregated view of the main revisions. It includes some charts showing the revisions for the totals (NACE TOTALS and B5N and B6N for table 13).
+The report includes and aggregated view of the main revisions. It includes some charts showing the revisions for the totals (NACE TOTAL and B5N and B6N for table 13).
 
 ```{r,echo=FALSE,warning=FALSE,message=FALSE, fig.height=7.5, fig.width=12, message=FALSE, warning=FALSE, r,echo=FALSE}
 rev <- files[activity %in% c("_T","_Z") & NUTS %in% c("0","2","3")&!str_detect(ref_area,"ZZ|ZZZ")] %>% 
