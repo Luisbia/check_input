@@ -19,12 +19,14 @@ source("utils/theme_report.R")
 df_new <- read_parquet("data/new.parquet") %>% 
   select(-obs_status,-value,-date) %>% 
   filter(country %in% country_sel & table %in% table_sel) %>% 
-  rename(new=obs_value)
+  rename(new=obs_value) %>%
+  mutate(NUTS=as.factor(NUTS))
 
 df_prev <- dataregacc::eurobase %>% 
   select(-obs_status) %>% 
   filter(country %in% country_sel & table %in% table_sel) %>% 
-  rename(prev=obs_value) 
+  rename(prev=obs_value) %>%
+  mutate(NUTS=as.factor(NUTS))
 
 
 df <- full_join(df_prev,df_new) %>% 

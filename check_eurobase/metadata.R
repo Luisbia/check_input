@@ -7,15 +7,17 @@ country_sel <- c("AT", "BE" ,"BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI
 table_sel <- c("gdp2","pop3","gva3","gvagr2","emp3","coe2","gfcf2","emphw2","hh2")
 
 
-df_new <- read_parquet("data/new.parquet") %>% 
+df_new <- read_parquet("check_eurobase/data/new.parquet") %>% 
   select(-obs_status,-value,-date) %>% 
   filter(country %in% country_sel & table %in% table_sel) %>% 
-  rename(new=obs_value)
+  rename(new=obs_value) %>% 
+  mutate(NUTS=as.factor(NUTS))
 
 df_prev <- dataregacc::eurobase %>% 
   select(-obs_status) %>% 
   filter(country %in% country_sel & table %in% table_sel) %>% 
-  rename(prev=obs_value) 
+  rename(prev=obs_value) %>% 
+  mutate(NUTS=as.factor(NUTS))
 
 
 df <- full_join(df_prev,df_new) %>% 
@@ -51,6 +53,7 @@ minmax<- minmax[,.(min=min(time_period), max=max(time_period)), .(country,sto,un
   .[,period:= str_replace_all(period,"2020-2020","2020")] %>%
 .[,period:= str_replace_all(period,"2019-2019","2019")] %>%
 .[,period:= str_replace_all(period,"2018-2018","2018")] %>%
+  .[,period:= str_replace_all(period,"2017-2017","2017")] %>%
 .[,variable:=paste0(sto,unit_measure)] %>% 
 .[,":="(sto=NULL,unit_measure=NULL, min=NULL, max=NULL)]
 
@@ -81,6 +84,6 @@ modifyBaseFont(wb, fontSize = 12, fontName = "Calibri Light")
   addWorksheet(wb,"Average_revision")
   writeDataTable(wb, "Average_revision", rev,tableStyle = "TableStyleMedium13")
 
-saveWorkbook(wb, paste0("output/metadata_",format(Sys.time(),"%Y-%m-%d"),
+saveWorkbook(wb, paste0("check_output/output/metadata_",format(Sys.time(),"%Y-%m-%d"),
                         ".xlsx"), overwrite = TRUE)
 

@@ -1,0 +1,202 @@
+---
+title: "Release 2021"
+author: "Luis Biedma"
+date: "23/02/2021"
+output: 
+  html_document: 
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+
+```{r , message=FALSE, warning=FALSE, cache = FALSE}
+library(tidyverse)
+library(vroom)
+library(DT)
+library(sf)
+library(tmap)
+library(kableExtra)
+library(formattable)
+library(echarts4r)
+library(plotly)
+
+```
+
+
+
+```{r, message=FALSE, warning=FALSE, cache = FALSE}
+# Load GDP
+
+ files <- list.files(
+  path = "data/new/",
+  full.names = TRUE,
+  pattern = glob2rx("nama_10r_2gdp*"),
+  recursive = TRUE) %>%  as_tibble()
+
+import_file <- function (file) {
+  vroom(file,
+        delim = " ",
+        col_names=c("time", "geo", "unit","values"),
+        col_types = list(col_character(),col_factor(),col_factor(),col_double()),
+        skip= 4) %>% 
+    mutate(time=substr(time, 1, 4)) %>% 
+    mutate(time=as.numeric(time))
+}
+
+file_new<- files %>% 
+  mutate( data= map( value, import_file)) %>%  
+  unnest( data) %>% 
+  select(-value) 
+
+ files <- list.files(
+  path = "data/prev/",
+  full.names = TRUE,
+  pattern = glob2rx("nama_10r_2gdp*"),
+  recursive = TRUE) %>%  as_tibble()
+
+file_prev<- files %>% 
+  mutate( data= map( value, import_file)) %>%  
+  unnest( data) %>% 
+  select(-value) %>% 
+  rename(prev_2020=values)
+
+files_df<- left_join(file_new,file_prev)
+
+NUTS2016 <- readxl::read_xlsx("NUTS2016.xlsx") %>% 
+  filter(NUTS!="3") %>% 
+  mutate_if(is.character,as.factor) %>% 
+  mutate(NUTS=as.factor(NUTS)) %>% 
+  filter(!Country %in% c("UK","IS","NO","CH","LI","ME","MK","RS","TR","AL"))
+
+
+release<- left_join (NUTS2016, files_df) 
+
+```
+
+## Main results: GDP per capita in PPS as % of the EU average 
+
+
+```{r, message=FALSE, warning=FALSE, cache = FALSE}
+temp<-release %>% 
+  filter(time >= 2019 &  unit=="PPS_HAB_EU27_2020") %>% 
+  select(Country,NUTS,geo,label,values) %>%  
+  group_by(NUTS) %>% 
+  mutate(rank=round(rank(desc(values)))) %>% 
+  ungroup() %>% 
+  droplevels()
+
+
+as.datatable(formattable(temp, list(values = color_bar("lightblue"))),  filter = "top", class = "stripe hover", extensions = "Buttons",
+             options = list(  lengthMenu = list(c(20,50,200, -1), c("20","50","200", "All")),
+                              pageLength = 50, autoWidth = TRUE,  dom = "Blfrtip", buttons = c("excel")),
+             rownames= FALSE
+)  
+
+```
+
+### Main revisions (2018 data)
+
+
+```{r, message=FALSE, warning=FALSE, cache = FALSE}
+
+
+df_prev<- release %>% 
+  mutate(rev=values-prev_2020,
+         revp=round(rev*100/prev_2020))
+  
+top10 <- df_prev  %>% 
+  filter(unit == "PPS_HAB_EU27_2020" & time =="2018" & NUTS =="2") %>%  
+  arrange(desc(rev)) %>% 
+  head(10) %>% 
+  select(Country, geo, label, values, prev_2020, rev)
+
+bot10 <- df_prev %>% 
+  filter(unit == "PPS_HAB_EU27_2020" & time =="2018" & NUTS =="2") %>%  
+    arrange(rev) %>% 
+  head(10) %>% 
+  select(Country, geo, label, values, prev_2020, rev)
+```
+
+#### Positive revisions
+
+```{r, message=FALSE, warning=FALSE, cache = FALSE}
+  kbl(top10) %>% 
+  kable_styling()
+```
+
+
+#### Negative revisions
+
+```{r, message=FALSE, warning=FALSE, cache = FALSE}
+  kbl(bot10) %>% 
+  kable_styling()
+```
+
+## Maps {.tabset}
+
+### GDP per capita PPS % EU
+
+```{r, message=FALSE, warning=FALSE}
+load(file="nuts_map.Rdata")
+
+sf<- left_join (nuts, file_new) 
+
+sf<- sf %>% 
+  filter(!CNTR_CODE %in% c("UK","IS","NO","CH","LI"))
+
+tmap_mode("view")
+sf %>% filter(LEVL_CODE=="2" & time==2019  & unit=="PPS_HAB_EU27_2020")  %>% 
+tm_shape() +
+tm_fill("values", popup.vars = c("values","NUTS_ID","NUTS_NAME"), palette="RdBu", style="quantile",  title="GDP per capita in PPS as % EU average, 2019")+
+  tm_borders()
+
+```
+
+
+### GDP per capita EUR
+
+
+```{r, message=FALSE, warning=FALSE, cache = FALSE}
+
+sf %>% filter(LEVL_CODE=="2" & time==2019  & unit=="EUR_HAB")  %>% 
+tm_shape() +
+tm_fill("values", popup.vars = c("values","NUTS_ID","NUTS_NAME"), palette="RdBu", style="quantile",title="GDP per capita in EUR, 2019")+
+  tm_borders()
+
+```
+
+
+## Comments on GDP data:
+
+__France__ has provided for the first time data on GDP for the DOMs, which have a special tax regime. This has decreased their GDP compared with the standard method of allocating taxes proportionally to value added. 
+
+__Germany__ has revised substantially Braunschweig (DE91) due to new source data for a unit in Nace M_N.
+
+__Czechia__ has revised the methodology to allocate GVA by region, using more extensively Compensation of Employees as an indicator instead of employment data.
+
+__Slovakia__ There are noticeable breaks in PPS from 2016, which translates into a decrease in PPS per capita.
+
+
+## Comments on other data:
+
+__Lithuania__ provides now some time series on employment based on place of work and not on place of residency. Data cannot be completely back-casted as they use LFS and NUTS 2 were created with NUTS 2016.
+
+__Hungary__ big revision in Household data after we signaled last year that the allocation of social contributions looked dubious.
+
+__Poland__ big revision in Household data due to better distribution of taxes and property income in the "Warsaw" regions (PL91 and PL92). Employment is a mixture of place of work (2019)/place of residence for "Warsaw" regions. 
+
+__Romania__ big revision in Household data for 2017 coming from national revision in Current transfers.
+
+
+`Derogations` for Germany, Austria, Croatia and France can be consider closed. Malta and Poland still did not provided some historical series.
+
+`Completeness` is almost full. Only some data for Sweden is missing as the data provided by Nace rev. 2 is far from being consistent with National Accounts data.
+

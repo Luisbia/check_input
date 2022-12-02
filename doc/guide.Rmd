@@ -1,17 +1,16 @@
 ---
-title: "REGACC Production Process: a practical guide, 2022"
+title: "REGACC Production Process: a practical guide, 2022 edition"
 author: "Luis Biedma"
 date: "`r Sys.Date()`"
 output: 
-  html_document:
-    toc: true
+  html_document: 
+    toc: yes
     toc_depth: 4
-    collapsed: true
-    toc_float: true
+    collapsed: yes
+    toc_float: yes
     theme: readable
     highlight: monochrome
-    df_print: paged
-    code_download: true
+    code_download: yes
 editor_options: 
   chunk_output_type: console
 ---
@@ -417,7 +416,7 @@ By filling we mean that we take the validated value and impute it to the tempora
 
 We will get also some information on the completeness of the files. If we see that is not 100% we will see why not in the following sections or we can use `regacc::report_completeness()` with the option `verbose = TRUE`.
 
-```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=7.5, fig.width=12}
+```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=7.5, fig.width=12, fig.align='center'}
 library(dataregacc)
 country_sel<-"SI"
 
@@ -951,7 +950,7 @@ library(regacc)
 options(dplyr.summarise.inform = FALSE)
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=3, fig.width=5, fig.align='center'}
 
 country_sel<- "DK"
 z_score <- 4
@@ -1036,7 +1035,7 @@ for (i in seq_along(df_charts$plot)) print(df_charts$plot[[i]])
 
 We usually give a quick look to compare the employment data provided to us to the one of the LFS. There should be a bit or a lot different depending on the regions. If they are the same it would be dig Also if the difference between the two series shows a recent jump we may investigate it.
 
-```{r, echo=FALSE}
+```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=7, fig.width=10, fig.align='center'}
 emp_regacc <-list.files(path="data/csv",
                 pattern= glob2rx(paste0("*",country_sel,"*")),
                 full.names=TRUE) %>% 
@@ -1088,7 +1087,7 @@ ggplot(df, aes(time_period, values, colour = series, label = label))+
 
 We do also a comparison with population data from demography statistics. In most cases there is a perfect match or very small differences. With results of the Census 2021 coming in we should be attentive to see if there are unusual differences in the latest years.
 
-```{r, echo=FALSE}
+```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=3, fig.width=5, fig.align='center'}
 country_sel<- "SI"
 pop_regacc <- list.files(path="data/csv",
                 pattern= glob2rx(paste0("*",country_sel,"*")),
@@ -1182,8 +1181,8 @@ National GDP should be extracted from NAMA in February when we know that EU aggr
 
 ## Regional GVA in Previous Year Prices
 
-This year in order to calculate GDP volume growth rates we need to load in Matis regional value added in previous year prices. This relies on a data extracted with denodo a day after the data has been validated  stored in `data/denodo/all_primary.parquet`, national data extracted from Matis and `regacc::calculate_gva_pyp()`. The script `ggva_pyp/gva_pyp` will create a csv file in `gva_pyp/output` that can later be loaded in Matis. As the denodo extraction is quite heavy it is better if only one person creates the files.
-
+This year in order to calculate GDP volume growth rates we need to load in Matis regional value added in previous year prices. This relies on a data extracted with denodo a day after the data has been validated  stored in `data/denodo/all_primary.parquet`, national data extracted from Matis and `regacc::calculate_gva_pyp()`. The script `ggva_pyp/gva_pyp` will create a csv file in `gva_pyp/output` that can later be loaded in Matis. As the denodo extraction is quite heavy it is better if only one person creates the files. `data/denodo/all_primary.parquet` can be created using `data/denodo/extractions_regacc.R`.
+ 
 ## Regional GDP for France and Portugal
 
 For Portugal and France we need to load separately the GDP, which is directly provided by Portugal, while for France the GDP of the DOMS is provided and we need to calculate the other french regions. We store the files with the calcuations and loaded in Matis in *U:/03_Regional Accounts/03P_Data Releases/Data Releases GDP/XXX*.
@@ -1275,6 +1274,202 @@ We can provide the NQR revision file as soon as the data is validated. Normally 
 
 The confirmation file should be sent some weeks before the release and after the NAMA data is released in mid February because if we would do it earlier we could get in the meantime some updates to population data. The excel file is created with a script in `/confimation` which uses the denodo extraction `data/denodo/all_primary.parquet`.
 
-# Checking eurobase files
+```{r, eval=FALSE}
+source("confirmation/script_confirmation.R")
+```
 
 
+# Main indicators
+
+We produce a short summary report with the evolution and revisions of some important indicators (GDP per capita in PPS as % EU, GDP volume growth rate, employment and population change, productivity per person, compensation per employee and net disposable income per capita) . It uses the data in `data/denodo/all_primary.parquet` and `dataregacc::eurobase`. Executing:
+
+```{r, eval=FALSE}
+rmarkdown::render("overview/main_indicators.Rmd", 
+                  params = list(report = country_sel),
+                  output_file = paste0(country_sel,"_",
+                                       format(Sys.time(),"%Y-%m-%d"),
+                                       "_main_indicators.html"))
+```
+
+will create an html file in `overview/`.
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=7.5, fig.width=12, fig.align='center'}
+
+country_sel<- "DK"
+
+new<-read_parquet(here("data","denodo","all_primary.parquet")) %>% 
+  filter(country==country_sel & activity %in% c("_T","_Z") & prices!="LR" & type=="V" & transformation !="A3") %>% 
+  select(table_identifier,country,ref_area,NUTS,sto,prices,unit_measure,time_period,obs_value)
+
+prev<- eurobase %>% 
+  filter(country ==country_sel & activity %in% c("TOTAL","_Z")) %>% 
+  select(table,country,ref_area,NUTS,sto,unit_measure,time_period,obs_value) %>% 
+  mutate(NUTS=as.factor(NUTS))
+
+gdp_new<- new %>% 
+  filter(sto=="B1GQ" & NUTS %in% c("0","2") & 
+          time_period>=2018 & unit_measure %in% c("PE_B6_R_B6_POP") & 
+           table_identifier=="T1001_1200") %>% 
+  select(ref_area,NUTS,time_period,obs_value) %>% 
+  mutate(obs_value=round_half_up(obs_value,0)) 
+
+
+p<-ggplot(gdp_new,aes(obs_value,fct_reorder(ref_area,obs_value),colour=as.factor(time_period)))+
+   geom_point(size=3)+
+   theme_ra()+
+  scale_colour_ra()+
+  theme(panel.grid.major.y = element_blank())+
+    labs(title="GDP per capita in PPS as % of the EU average")
+
+ra_logo(p) 
+```
+
+# DG REGIO
+
+Two/three days before the release we must send to a limited set of DG REGIO staff the GDP data as an encrypted mail. The data should have more precision than what we published in eurobase (unrounded figures). However as we publish GDP and population data with two decimals a hight precision can be also obtained when calculating GDP per capita in eurobase.
+
+We rely again on the extraction `data/denodo/all_primary.parquet` and create the file with:
+
+```{r, eval=FALSE}
+source("DG_REGIO/script_DG_REGIO.R")
+```
+
+
+# Checking eurobase files and summary tables for metadata
+
+Another check we can do is to see that possible modifications on source data have been implemented properly (change of flags, make some data not publishable, etc). We will also create automatically some tables of our metadata note. This is done in the folder `check_eurobase`. 
+
+The first step is to place the zipped txt files that we will send to eurobase in `check_eurobase/data/new`. 
+
+The script `00-run.all` is used to select particular countries or all and will guide us on the scripts available.
+
+The script `01-prepare_data`will create a new parquet file consolidating all tables in the file `data/new.parquet`. The script `02-internal_checks` will do some checks (NACE, NUTS, etc) and create a file in `output`.The following scripts will also produce a similar output for external consistency, revisions and flags. The thresholds are harcoded.
+
+We can also see visually some countries or tables with `chart_browser.R`. If we load all countries and tables the application will feel a bit heavy and we should be careful not to crash it doing too many changes in the selection because it uses some shiny reactivity to update the selection offered. For example to decide which regions to show as possible selection (we do not want to show 2000 regions) the following code is used:
+
+```{r,eval=FALSE}
+ regions <- reactive({
+    filter(df, country %in% input$country & NUTS %in% input$NUTS)
+  })
+  
+  observeEvent(regions(), {
+    choices <- unique(regions()$ref_area)
+    updateSelectInput(inputId = "ref_area", choices = choices,selected=choices) 
+  })
+```
+
+The script `metadata.R` will create some predefined tables we will insert in the metadata file. For example, the periods that have been revised for the main variables.
+
+```{r,echo=FALSE}
+library(tidyverse)
+library(data.table)
+library(openxlsx)
+
+country_sel <- c("AT", "BE" ,"BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HR", "HU", "IE", "IT", "LT", "LU", "LV","MT","NL", "PL","PT", "RO", "SE", "SI", "SK")
+#  c("AL", "AT", "BE" ,"BG", "CH", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "ME", "MK", "MT","NL", "NO", "PL","PT", "RO", "SE", "SI", "SK","TR", "RS", "EU")
+table_sel <- c("gdp2","pop3","gva3","gvagr2","emp3","coe2","gfcf2","emphw2","hh2")
+
+
+df_new <- read_parquet(here("check_eurobase","data","new.parquet")) %>% 
+  select(-obs_status,-value,-date) %>% 
+  filter(country %in% country_sel & table %in% table_sel) %>% 
+  rename(new=obs_value) %>% 
+  mutate(NUTS=as.factor(NUTS))
+
+df_prev <- dataregacc::eurobase %>% 
+  select(-obs_status) %>% 
+  filter(country %in% country_sel & table %in% table_sel) %>% 
+  rename(prev=obs_value) %>% 
+  mutate(NUTS=as.factor(NUTS))
+
+
+df <- full_join(df_prev,df_new) %>% 
+  relocate(prev,.before=new) %>% 
+  mutate(rev=round(new-prev),
+         revp=round(rev*100/prev,1)) %>% 
+  mutate(NUTS=as.factor(NUTS)) %>% 
+  left_join(.,dataregacc::NUTS_2021) %>% 
+  filter(label != "Extra-regio") %>%
+  mutate(label = paste0(ref_area, "-", label)) %>% 
+  pivot_longer(cols=c(new,prev,rev,revp),
+               names_to="type",
+               values_to="obs_value")
+
+  extract<- df %>% 
+    filter(NUTS %in% c("2") &  
+        unit_measure %in% c("MIO_NAC","PS","HW") & 
+        type %in% c("rev","revp")  & 
+        str_ends(ref_area,"ZZ",negate=TRUE) &
+        activity %in% c("TOTAL","_Z") &
+        sto %in% c("B1G", "EMP", "POP", "D1", "P51G", "B6N")) 
+
+setDT(extract)
+
+minmax<- copy(extract)
+
+minmax<- minmax[obs_value!=0 & type=="rev", ]
+minmax<- minmax[abs(obs_value)>1 & type=="rev", ]
+
+
+minmax<- minmax[,.(min=min(time_period), max=max(time_period)), .(country,sto,unit_measure)] %>% 
+.[,period:=paste0(min,"-",max)] %>% 
+  .[,period:= str_replace_all(period,"2020-2020","2020")] %>%
+.[,period:= str_replace_all(period,"2019-2019","2019")] %>%
+.[,period:= str_replace_all(period,"2018-2018","2018")] %>%
+  .[,period:= str_replace_all(period,"2017-2017","2017")] %>%
+.[,variable:=paste0(sto,unit_measure)] %>% 
+.[,":="(sto=NULL,unit_measure=NULL, min=NULL, max=NULL)]
+
+minmax <- dcast(minmax,... ~variable, value.var = "period") 
+setcolorder(minmax,c("country","B1GMIO_NAC"))
+setnames(minmax, c("country","B1GMIO_NAC" ), 
+                 c("Country", "Gross Value Added"))
+
+knitr::kable(minmax)
+
+``` 
+
+
+# Release
+
+Apart from creating extractions with the data needed for the press release we also create a briefing file for the Head of Unit and the Director. Apart from some specific information on the data (revisions, remarks, etc) we include some interactive elements. We will include the code in the folder `release`. 
+
+```{r, echo=FALSE}
+library(tmap)
+library(formattable)
+
+new<-read_parquet(here("data","denodo","all_primary.parquet")) %>% 
+  filter(activity %in% c("_T","_Z") & prices!="LR" & type=="V" & transformation !="A3" & NUTS %in% c("0","2") & time_period >=2020 & table_identifier =="T1001_1200" & unit_measure =="PE_B6_R_B6_POP" & !country %in% c("TR","AL","ME","MK","NO","RS")) %>% 
+  select(country,NUTS,ref_area,time_period,obs_value) %>% 
+  mutate(obs_value=janitor::round_half_up(obs_value)) %>% 
+  pivot_wider(names_from=time_period,
+               values_from=obs_value) %>%
+  drop_na() %>% 
+  group_by(NUTS) %>% 
+   mutate(rank_2020=round(rank(desc(`2020`))),
+          rank_2021=round(rank(desc(`2021`))))
+  
+as.datatable(formattable(new, list(`2020` = color_bar("#FFCC00"),
+                                   `2021` = color_bar("#FFCC00"))),  filter = "top", class = "stripe hover", extensions = "Buttons",
+             options = list(  lengthMenu = list(c(20,50,200, -1), c("20","50","200", "All")),
+                              pageLength = 50, autoWidth = TRUE,  dom = "Blfrtip", buttons = c("excel")),
+             rownames= FALSE
+)  
+```
+
+
+```{r, echo=FALSE,message=FALSE, warning=FALSE}
+nuts<- dataregacc::NUTS_shape
+
+sf<- left_join (nuts, new) 
+
+sf<- sf %>% 
+  filter(!CNTR_CODE %in% c("UK","IS","NO","CH","LI") & LEVL_CODE=="2")
+
+tmap_mode("view")
+sf %>%  
+tm_shape() +
+tm_fill("2021", popup.vars = c("ref_area","NAME_LATN","2021"), palette="viridis", style="quantile",  title="GDP per capita in PPS as % EU average, 2021")+
+  tm_borders()
+
+```

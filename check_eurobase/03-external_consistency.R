@@ -3,14 +3,14 @@ library(tidyverse)
 library(eurostat)
 library(openxlsx)
 
-nama <- fread("data/nama.csv") %>% 
+nama <- fread("data/denodo/nama.csv") %>% 
   setnames("obs_value","nama") %>% 
   mutate(unit_measure=str_replace(unit_measure,"XDC","MIO_NAC"),
          unit_measure=str_replace(unit_measure,"PC","PCH_PRE"),
          activity=str_replace(activity,"_T","TOTAL"))
   
 
-nfsa <- fread("data/nfsa.csv") %>% 
+nfsa <- fread("data/denodo/nfsa.csv") %>% 
   setnames("obs_value","nfsa")
 
 ma_gdp<- get_annual_NAMA()%>% 
@@ -18,7 +18,7 @@ ma_gdp<- get_annual_NAMA()%>%
   mutate(unit_measure=str_replace(unit_measure,"CP_MPPS_EU27_2020","MIO_PPS_EU27_2020"),
           unit_measure=str_replace(unit_measure,"CP_MEUR","MIO_EUR"))
 
-df_new <- read_parquet("data/new.parquet") %>% 
+df_new <- read_parquet("check_eurobase/data/new.parquet") %>% 
   select(-obs_status,-value,-date) %>% 
   filter(country %in% sel_countries) 
 
@@ -149,7 +149,7 @@ if (nrow(hh2) > 0){
   writeDataTable(wb, "hh2", hh2,tableStyle = "TableStyleMedium13")}
 
 
-saveWorkbook(wb, paste0("output/external_consistency_",format(Sys.time(),"%Y-%m-%d"),
+saveWorkbook(wb, paste0("check_eurobase/output/external_consistency_",format(Sys.time(),"%Y-%m-%d"),
                         ".xlsx"), overwrite = TRUE)
 
 l <- ls()

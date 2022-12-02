@@ -21,12 +21,10 @@ knitr::opts_chunk$set(echo = FALSE,message = FALSE, warning = FALSE)
 ```{r}
 library(dataregacc)
 library(tidyverse)
-library(here)
 library(regacc)
-library(plotly)
 library(sf)
 library(here)
-source(here("utils","palette.R"))
+library(highcharter)
 check_packages()
 
 country_sel <- params$report
@@ -38,7 +36,7 @@ NUTS_2021 %>%
  show_DT() 
 ```
 
-```{r}
+```{r,eval=FALSE}
 map<- NUTS_shape %>% 
 filter(CNTR_CODE==country_sel & LEVL_CODE == 2)
   
@@ -62,12 +60,15 @@ new<-read_parquet(here("data","denodo","all_primary.parquet")) %>%
 
 
 ```{r gdp}
+
 gdp_new<- new %>% 
   filter(sto=="B1GQ" & NUTS %in% c("0","2") & 
-          time_period>=2018 & unit_measure %in% c("PE_B6_R_B6_POP") & 
+          time_period>=2017 & unit_measure %in% c("PE_B6_R_B6_POP") & 
            table_identifier=="T1001_1200") %>% 
   select(ref_area,NUTS,time_period,obs_value) %>% 
-  mutate(obs_value=round_half_up(obs_value,0))
+  mutate(obs_value=round_half_up(obs_value,0),
+         time_period=as.integer(time_period)) %>% 
+  left_join(.,NUTS_2021)
 
 # gdp_prev<- prev %>% 
 #   filter(table=="gdp2" & NUTS %in% c("0","2") & 
@@ -82,14 +83,20 @@ gdp_new<- new %>%
 #                values_to="obs_value") %>% 
 #   left_join(.,NUTS_2021)
 
-p<-ggplot(gdp_new,aes(obs_value,fct_reorder(ref_area,obs_value),colour=as.factor(time_period)))+
-   geom_point(size=3)+
-   theme_ra()+
-  scale_colour_ra()+
-  theme(panel.grid.major.y = element_blank())+
-    labs(title="GDP per capita in PPS as % of the EU average")
+chart_hc<- function(data,title){
+  hchart(data,"line",hcaes(x=time_period,y=obs_value,group=ref_area, name=label)) %>% 
+  hc_yAxis( title = list(text = ""))%>% 
+  hc_xAxis(
+    title = list(text = ""),
+             allowDecimals=FALSE) %>% 
+  hc_title(
+    text = paste0(title)
+    ) %>% 
+    hc_add_theme(hc_theme_538())
+}
 
-ra_logo(p)
+
+chart_hc(gdp_new,"GDP per capita in PPS as % of the EU average")
 
 ```
 
@@ -99,86 +106,43 @@ gdpgr<- new %>%
           time_period>=2018 & unit_measure %in% c("PC") & 
            table_identifier=="T1001_1200" & str_detect(ref_area,"ZZ",negate = TRUE)) %>% 
   select(ref_area,time_period,NUTS,obs_value) %>% 
-  mutate(obs_value=round_half_up(obs_value,1))
+  mutate(obs_value=round_half_up(obs_value,1)) %>% 
+  left_join(.,NUTS_2021)
 
-p<-ra_dot(dat=gdpgr,hor=obs_value, ver=fct_reorder(ref_area,obs_value), clr=as.factor(time_period), acc = 0.1,psz=3 )+
-  labs(title="GDP volume growth")+
-  theme(legend.position = "top",
-      legend.text.align = 0,
-      legend.justification = 1)
+chart_hc(gdpgr,"GDP volume growth")
 
-ra_logo(p)
 ```
 
 ```{r emp}
 emp_new<- new %>% 
   filter(sto=="EMP" & NUTS %in% c("0","2") & 
           time_period>=2017 & unit_measure %in% c("PS") & 
-           table_identifier=="T1001_1200") %>% 
+           table_identifier=="T1001_1200" & str_detect(ref_area,"ZZ",negate = TRUE)) %>% 
   group_by(ref_area) %>% 
   arrange(time_period,.by_group = TRUE) %>% 
   mutate(obs_value=round(obs_value/lag(obs_value)*100-100,1)) %>% 
   na.omit() %>% 
-  select(ref_area,NUTS,time_period,obs_value) 
+  select(ref_area,NUTS,time_period,obs_value)%>% 
+  left_join(.,NUTS_2021)
 
-# emp_prev<- prev %>% 
-#   filter(table=="emp3" & NUTS %in% c("0","2") & 
-#            time_period>=2017 & unit_measure =="PS" & sto== "EMP") %>% 
-# group_by(ref_area) %>% 
-#   arrange(time_period,.by_group = TRUE) %>% 
-#   mutate(obs_value=round(obs_value/lag(obs_value)*100-100,1)) %>% 
-#   na.omit() %>% 
-#   select(ref_area,NUTS,time_period,obs_value) %>% 
-#   rename(prev=obs_value) 
+chart_hc(emp_new,"Employment in persons, % change") 
 
-# emp<- full_join(emp_prev,emp_new) %>% 
-#   pivot_longer(cols=c(new,prev),
-#                names_to="type",
-#                values_to="obs_value") %>% 
-#   filter(str_detect(ref_area,"ZZ",negate = TRUE))
-
-p<-ra_dot(dat=emp_new,hor=obs_value, ver=fct_reorder(ref_area,obs_value), clr=as.factor(time_period), psz=3,  acc=0.1 )+
-  theme(legend.position = "top",
-      legend.text.align = 0,
-      legend.justification = 1)+
-  labs(title="Employment in persons",
-       subtitle="Percentage change")
-
-ra_logo(p)
 ```
 
 ```{r pop}
 pop_new<- new %>% 
   filter(sto=="POP" & NUTS %in% c("0","2") & 
           time_period>=2017 & unit_measure %in% c("PS_B") & 
-           table_identifier=="T1001_1200") %>% 
+           table_identifier=="T1001_1200" & str_detect(ref_area,"ZZ",negate = TRUE)) %>% 
   group_by(ref_area) %>% 
   arrange(time_period,.by_group = TRUE) %>% 
   mutate(obs_value=round(obs_value/lag(obs_value)*100-100,1)) %>% 
   na.omit() %>% 
-  select(ref_area,NUTS,time_period,obs_value) 
+  select(ref_area,NUTS,time_period,obs_value) %>% 
+  left_join(.,NUTS_2021)
 
-# pop_prev<- prev %>% 
-#   filter(table=="pop3" & NUTS %in% c("0","2") & 
-#            time_period>=2017 & unit_measure =="PS" & sto== "POP") %>% 
-# group_by(ref_area) %>% 
-#   arrange(time_period,.by_group = TRUE) %>% 
-#   mutate(obs_value=round(obs_value/lag(obs_value)*100-100,1)) %>% 
-#   na.omit() %>% 
-#   select(ref_area,NUTS,time_period,obs_value) %>% 
-#   rename(prev=obs_value) 
-# 
-# pop<- full_join(pop_prev,pop_new) %>% 
-#   pivot_longer(cols=c(new,prev),
-#                names_to="type",
-#                values_to="obs_value") %>% 
-#   filter(str_detect(ref_area,"ZZ",negate = TRUE))
+chart_hc(pop_new,"Population, % change") 
 
-p<-ra_dot(dat=pop_new,hor=obs_value, ver=fct_reorder(ref_area,obs_value), clr=as.factor(time_period), acc=0.1 )+
-  labs(title="Population",
-       subtitle="Percentage change")
-
-ra_logo(p)
 
 ```
 
@@ -191,28 +155,11 @@ gva_ps_new<- new %>%
   pivot_wider(names_from = sto,
               values_from = obs_value) %>% 
   mutate(obs_value=round(B1G*1000/EMP,-2)) %>% 
-   filter(str_detect(ref_area,"ZZ",negate = TRUE))
+   filter(str_detect(ref_area,"ZZ",negate = TRUE))%>% 
+  left_join(.,NUTS_2021)
 
-# gva_ps_prev<- prev %>% 
-#   filter(sto %in% c("B1G","EMP") & NUTS %in% c("0","2") & 
-#           time_period>=2018 & unit_measure %in% c("MIO_EUR","PS")) %>% 
-#     select(ref_area,NUTS,sto,time_period,obs_value) %>% 
-#   pivot_wider(names_from = sto,
-#               values_from = obs_value) %>% 
-#   mutate(obs_value=round(B1G*1000/EMP,-2)) %>% 
-#   rename(prev=obs_value)
-# 
-# gva_ps<- full_join(gva_ps_new,gva_ps_prev) %>% 
-#   pivot_longer(cols=c(new,prev),
-#                names_to="type",
-#                values_to="obs_value") %>% 
-#   filter(str_detect(ref_area,"ZZ",negate = TRUE))
+chart_hc(gva_ps_new,"Value Added per person employed, EUR") 
 
-p<-ra_dot(dat=gva_ps_new,hor=obs_value, ver=fct_reorder(ref_area,obs_value), clr=as.factor(time_period), acc=1 )+
-     labs(title="Value Added per person employed",
-       subtitle="EUR")
-
-ra_logo(p)
 ```
 
 ```{r d1 hw}
@@ -223,30 +170,12 @@ d1_hw_new<- new %>%
     select(ref_area,NUTS,sto,time_period,obs_value) %>% 
   pivot_wider(names_from = sto,
               values_from = obs_value) %>% 
-  mutate(obs_value=round(D1*1000/SAL)) %>% 
-   filter(str_detect(ref_area,"ZZ",negate = TRUE))
+  mutate(obs_value=round(D1*1000/SAL,1)) %>% 
+   filter(str_detect(ref_area,"ZZ",negate = TRUE))%>% 
+  left_join(.,NUTS_2021)
 
-# d1_hw_prev<- prev %>% 
-#   filter(sto %in% c("D1","SAL") & NUTS %in% c("0","2") & 
-#           time_period>=2018 & unit_measure %in% c("MIO_EUR","HW") & 
-#            table !="hh2") %>% 
-#     select(ref_area,NUTS,sto,time_period,obs_value) %>% 
-#   pivot_wider(names_from = sto,
-#               values_from = obs_value) %>% 
-#   mutate(obs_value=round(D1*1000/SAL,0)) %>% 
-#   rename(prev=obs_value)
-# 
-# d1_hw<- full_join(d1_hw_new,d1_hw_prev) %>% 
-#   pivot_longer(cols=c(new,prev),
-#                names_to="type",
-#                values_to="obs_value") %>% 
-#   filter(str_detect(ref_area,"ZZ",negate = TRUE))
+chart_hc(d1_hw_new,"Compensation per hour worked, EUR") 
 
-p<-ra_dot(dat=d1_hw_new,hor=obs_value, ver=fct_reorder(ref_area,obs_value), clr=as.factor(time_period),acc=1 )+
-   labs(title="Compensation per hour worked",
-       subtitle="EUR")
-
-ra_logo(p)
 ```
 
 ```{r gfcf gva}
@@ -257,29 +186,12 @@ gfcf_gva_new<- new %>%
     select(ref_area,NUTS,sto,time_period,obs_value) %>% 
   pivot_wider(names_from = sto,
               values_from = obs_value) %>% 
-  mutate(obs_value=round(P51G*100/B1G)) %>% 
-     filter(str_detect(ref_area,"ZZ",negate = TRUE))
+  mutate(obs_value=round(P51G*100/B1G,1)) %>% 
+     filter(str_detect(ref_area,"ZZ",negate = TRUE))%>% 
+  left_join(.,NUTS_2021)
 
-# gfcf_gva_prev<- prev %>% 
-#   filter(sto %in% c("B1G","P51G") & NUTS %in% c("0","2") & 
-#           time_period>=2018 & unit_measure %in% c("MIO_NAC")) %>% 
-#     select(ref_area,NUTS,sto,time_period,obs_value) %>% 
-#   pivot_wider(names_from = sto,
-#               values_from = obs_value) %>% 
-#   mutate(obs_value=round(P51G*100/B1G,0)) %>% 
-#   rename(prev=obs_value)
-# 
-# gfcf_gva<- full_join(gfcf_gva_new,gfcf_gva_prev) %>% 
-#   pivot_longer(cols=c(new,prev),
-#                names_to="type",
-#                values_to="obs_value") %>% 
-#   filter(str_detect(ref_area,"ZZ",negate = TRUE)) 
+chart_hc(gfcf_gva_new,"Investment, as % GVA") 
 
-p<-ra_dot(dat=gfcf_gva_new,hor=obs_value, ver=fct_reorder(ref_area,obs_value), clr=as.factor(time_period), acc=1 )+
-   labs(title="Investment",
-       subtitle="as % GVA")
-
-ra_logo(p)
 ```
 
 ```{r b6n}
@@ -289,24 +201,10 @@ b6n_new<- new %>%
            table_identifier %in% c("T1300")) %>% 
     select(ref_area,NUTS,sto,time_period,obs_value) %>% 
     mutate(obs_value=round(obs_value,-2)) %>% 
-    filter(str_detect(ref_area,"ZZ",negate = TRUE))
+    filter(str_detect(ref_area,"ZZ",negate = TRUE))%>% 
+  left_join(.,NUTS_2021)
 
-# b6n_prev<- prev %>% 
-#   filter(sto %in% c("B6N") & NUTS %in% c("0","2") & 
-#           time_period>=2018 & unit_measure %in% c("EUR_HAB")) %>% 
-#     select(ref_area,NUTS,sto,time_period,obs_value) %>% 
-#       mutate(obs_value=round(obs_value,-2)) %>% 
-#   rename(prev=obs_value)
-# 
-# b6n<- full_join(b6n_new,b6n_prev) %>% 
-#   pivot_longer(cols=c(new,prev),
-#                names_to="type",
-#                values_to="obs_value") %>% 
-#   filter(str_detect(ref_area,"ZZ",negate = TRUE)) 
+chart_hc(b6n_new,"Net Disposable Income, EUR per inhabitant") 
 
-p<-ra_dot(dat=b6n_new,hor=obs_value, ver=fct_reorder(ref_area,obs_value), clr=as.factor(time_period), acc=1 )+
-   labs(title="Net Disposable Income",
-       subtitle="EUR per inhabitant")
 
-ra_logo(p)
 ```

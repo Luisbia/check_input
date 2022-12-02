@@ -1,7 +1,9 @@
 options(tidyverse.quiet = TRUE)
+options(scipen=999)
 library(tidyverse)
 library(dataregacc)
 library(regacc)
+library(here)
 check_packages()
 # select country
 country_sel<- "DK"
@@ -48,6 +50,12 @@ source("05_auxiliary.R")
 
 
 ### Visualisations ----
+
+rmarkdown::render("overview/main_indicators.Rmd", 
+                  params = list(report = country_sel),
+                  output_file = paste0(country_sel,"_",
+                                       "_main_indicators.html"))
+
 shiny_t1001 <- function(country_sel) {
   .GlobalEnv$country_sel <- country_sel
   shiny::runApp("app_t1001.R", launch.browser = TRUE)
@@ -74,10 +82,10 @@ source("NQR/NQR_script.R")
 ### GVA PYP ----
 source("gva_pyp/gva_pyp.R")
 
-### Overview
 
-rmarkdown::render("overview/main_indicators.Rmd", 
-                  params = list(report = country_sel),
-                  output_file = paste0(country_sel,"_",
-                                       "_main_indicators.html"))
+### Confirmation
+
+source("confirmation/script_confirmation.R")
+
+
 
