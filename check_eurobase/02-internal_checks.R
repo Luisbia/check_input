@@ -4,7 +4,7 @@ library(regacc)
 library(openxlsx)
 
 # read data
-df_new <- read_parquet("data/new.parquet") %>% 
+df_new <- read_parquet("check_eurobase/data/new.parquet") %>% 
   select(-obs_status,-value,-date) %>% 
   filter(country %in% sel_countries) 
 
@@ -145,7 +145,7 @@ if (nrow(vol) > 0){
   addWorksheet(wb,"vol")
   writeDataTable(wb, "vol", vol,tableStyle = "TableStyleMedium13")}
 
-saveWorkbook(wb, paste0("output/internal_consistency_",format(Sys.time(),"%Y-%m-%d"),
+saveWorkbook(wb, paste0("check_eurobase/output/internal_consistency_",format(Sys.time(),"%Y-%m-%d"),
                         ".xlsx"), overwrite = TRUE)
 
 l <- ls()

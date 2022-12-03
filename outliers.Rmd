@@ -3,14 +3,48 @@ title: "Outliers"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document: 
-    code_download: true
-    fig_width: 12
-    fig_height: 9
+    theme: readable
+    highlight: monochrome
+    code_download: yes
+editor_options: 
+  chunk_output_type: console
 params:
   country: DK
-  z_score: 1.5
+  z_score: 3
 ---
+<style type="text/css">
 
+body, td {
+   font-size: 16px;
+   font-family: Raleway;
+}
+code.r{
+  font-size: 14px;
+  font-family: Raleway;
+}
+td {
+    font-size: 12px;
+    font-family: Raleway;
+}
+h1, h2, h3, h4, h5, h6 {
+   font-size: 20px;
+   font-family: Raleway;  
+  color: #AF155C;
+}
+a {
+    font-family: Raleway;
+    color: #AF155C;
+}
+body { 
+background-color: #F3F6FC; 
+}
+.tocify .list-group-item {
+ background-color: #F3F6FC; 
+ font-family: Raleway;
+ color: #AF155C;
+ font-style:bold
+
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -36,6 +70,7 @@ library(DT)
 library(data.table)
 library(scales)
 library(rio)
+library(dataregacc)
 library(regacc)
 
 options(dplyr.summarise.inform = FALSE)
@@ -74,7 +109,7 @@ min_period <- df %>%
   pivot_wider(names_from=type,
               values_from=obs_value) %>% 
   mutate(rev=T-V) %>% 
-  filter(rev!=0) %>% 
+  filter(abs(rev)>1) %>% # to avoid roundings 
   select(table_identifier,ref_area,accounting_entry,sto,activity,unit_measure,time_period) %>% 
   group_by(table_identifier,ref_area,accounting_entry,sto,activity,unit_measure) %>%
   arrange(time_period,.by_group=TRUE) %>% 

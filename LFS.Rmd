@@ -3,12 +3,47 @@ title: "Regional Accounts checks - Employment in LFS"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document: 
-    code_download: true
-    fig_width: 12
-    fig_height: 9
+    theme: readable
+    highlight: monochrome
+    code_download: yes
+editor_options: 
+  chunk_output_type: console
 params:
-  report: DE
+  report: DK
 ---
+<style type="text/css">
+
+body, td {
+   font-size: 16px;
+   font-family: Raleway;
+}
+code.r{
+  font-size: 14px;
+  font-family: Raleway;
+}
+td {
+    font-size: 12px;
+    font-family: Raleway;
+}
+h1, h2, h3, h4, h5, h6 {
+   font-size: 20px;
+   font-family: Raleway;  
+  color: #AF155C;
+}
+a {
+    font-family: Raleway;
+    color: #AF155C;
+}
+body { 
+background-color: #F3F6FC; 
+}
+.tocify .list-group-item {
+ background-color: #F3F6FC; 
+ font-family: Raleway;
+ color: #AF155C;
+ font-style:bold
+
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -29,6 +64,7 @@ library(scales)
 library(plotly)
 library(rio)
 library(data.table)
+library(dataregacc)
 ```
 
 ```{r, eval = FALSE}

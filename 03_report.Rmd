@@ -1,22 +1,54 @@
 ---
-title: "Regional Accounts checks"
+title: "Regional Accounts charts"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 author: "Unit C2"
 output:
   html_document: 
-    
-    code_download: true
     toc: yes
-    toc_float: no
-    fig_width:  11
-    fig_height: 6.6
-    theme: cerulean
-params:
-  report: DK
+    toc_depth: 4
+    collapsed: yes
+    toc_float: yes
+    theme: readable
+    highlight: monochrome
+    code_download: yes
 editor_options: 
   chunk_output_type: console
+params:
+  report: DK
 ---
+<style type="text/css">
 
+body, td {
+   font-size: 16px;
+   font-family: Raleway;
+}
+code.r{
+  font-size: 14px;
+  font-family: Raleway;
+}
+td {
+    font-size: 12px;
+    font-family: Raleway;
+}
+h1, h2, h3, h4, h5, h6 {
+   font-size: 20px;
+   font-family: Raleway;  
+  color: #AF155C;
+}
+a {
+    font-family: Raleway;
+    color: #AF155C;
+}
+body { 
+background-color: #F3F6FC; 
+}
+.tocify .list-group-item {
+ background-color: #F3F6FC; 
+ font-family: Raleway;
+ color: #AF155C;
+ font-style:bold
+
+</style>
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = FALSE,
@@ -42,6 +74,7 @@ library(data.table)
 library(patchwork)
 library(regacc)
 library(dataregacc)
+library(ggiraph)
 
 options(dplyr.summarise.inform = FALSE)
 ```
@@ -69,14 +102,6 @@ NUTS_2021<-dataregacc::NUTS_2021 %>%
   mutate(country=as.character(country)) %>% 
   as.data.table()
 
-# load the nama data
-nama <- fread("data/denodo/nama.csv") %>% 
-# change column name
-  setnames("obs_value","nama")
-# load the nfsa data
-nfsa <- fread("data/denodo/nfsa.csv") %>% 
-# change column name
-  setnames("obs_value","nfsa")
 ```
 
 
@@ -93,7 +118,7 @@ source("utils/theme_report.R")
 knitr::include_graphics("eurostat_new.PNG")
 ```
 
-### Table 1001
+## Table 1001
 
 
 ```{r chart01}
@@ -116,10 +141,30 @@ t1001<- left_join(files, NUTS_2021) %>% # join with the NUTS
 #we use a function from utilities/plot_report.R
 # it has two arguments the sto and the title
 
+chart_1001_gg<- function(sto_sel,title){
+temp<- t1001 %>% 
+  filter(sto==sto_sel)
 
-plot_heatmap_t1001("B1G","Value Added NUTS 2")
-plot_heatmap_t1001("EMP","Employment NUTS 2")
-plot_heatmap_t1001("POP","Population NUTS 2")
+  gg<-ggplot(temp, aes(x = time_period,y = fct_rev(ref_area),fill=change))+    
+  geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",change), data_id = ref_area))+
+  theme_regacc_heatmap+
+    theme(axis.text.x = element_text(size =9,angle = 90),
+          panel.grid.major = element_blank())+
+    scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
+      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
+      scale_y_discrete(expand=c(0,0))+
+  labs(title=paste0(title))
+
+ x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
+               
+  return(x)}
+
+chart_1001_gg("B1G","Value Added NUTS 2")
+chart_1001_gg("EMP","Employment NUTS 2")
+chart_1001_gg("POP","Population NUTS 2")
 ```
 
 ```{r chart02}
@@ -135,19 +180,30 @@ plot_heatmap_t1001("POP","Population NUTS 2")
   select(time_period, ref_area, obs_value) %>% 
   na.omit()
   
+chart_vol_gg<- function(title){
+
+  gg<-ggplot(temp, aes(x = time_period,y = fct_rev(ref_area),fill=obs_value))+    
+  geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",obs_value), data_id = ref_area))+
+  theme_regacc_heatmap+
+    theme(axis.text.x = element_text(size =9,angle = 90),
+          panel.grid.major = element_blank())+
+    scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
+      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
+      scale_y_discrete(expand=c(0,0))+
+  labs(title=paste0(title))
+
+ x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
+               
+  return(x)}
 
 
-ggplotly(ggplot(temp,aes(time_period, fct_rev(ref_area), fill = obs_value)) +
-  geom_tile() +
-  theme_regacc_heatmap +
-     theme(axis.text.x = element_text(size =9,angle = 90))+
- scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
-  scale_x_continuous(breaks=c(min(temp$time_period),max(temp$time_period)), labels = label_number(accuracy = 1),expand=c(0,0))+
-   ggtitle("Gross Value Added Volume"))
-
+chart_vol_gg("Gross Value Added volume")
 ```
 
-### Table 1200
+## Table 1200
 
 ```{r chart03}
 
@@ -159,15 +215,42 @@ t1200 <- left_join(files,NUTS_2021) %>%
           sto %in% c ("B1G","EMP","SAL","POP")) %>% 
     mutate(ref_area=paste0(ref_area,"-",label))
 
-plot_heatmap_t1200("B1G","2","Value Added NUTS 2")
-plot_heatmap_t1200("B1G","3","Value Added NUTS 3")
-plot_heatmap_t1200("EMP","2","Employment (PS) NUTS 2")
-plot_heatmap_t1200("EMP","3","Employment (PS) NUTS 3")
-plot_heatmap_t1200("POP","3","Population NUTS 3")
+chart_1200_gg<- function(sto_sel,NUTS_sel,title){
+temp<- t1200 %>% 
+  filter(sto==sto_sel) %>% 
+   select(ref_area,NUTS, sto, activity, time_period, obs_value ) %>% 
+      group_by(time_period, sto, activity) %>%
+      mutate(share = round(obs_value*100 / obs_value[NUTS =="0"],1)) %>% 
+      ungroup() %>% 
+      filter(NUTS == NUTS_sel) %>% 
+      na.omit() 
+
+  gg<-ggplot(temp, aes(x = time_period,y = fct_rev(ref_area),fill=share))+    
+  geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",share), data_id = ref_area))+
+  theme_regacc_heatmap+
+    theme(axis.text.x = element_text(size =9,angle = 90),
+          panel.grid.major = element_blank())+
+    scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
+      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
+      scale_y_discrete(expand=c(0,0))+
+  labs(title=paste0(title))
+
+ x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
+               
+  return(x)}
+
+chart_1200_gg("B1G","2","Value Added NUTS 2")
+chart_1200_gg("B1G","3","Value Added NUTS 3")
+chart_1200_gg("EMP","2","Employment (PS) NUTS 2")
+chart_1200_gg("EMP","3","Employment (PS) NUTS 3")
+chart_1200_gg("POP","3","Population NUTS 3")
 
 ```
 
-###  Table 1002
+##  Table 1002
 
 ```{r 04 T1002}
 
@@ -177,19 +260,45 @@ t1002 <- left_join(NUTS_2021,files) %>%
          sto %in% c("D1", "P51G","EMP","SAL") &
          unit_measure %in% c("XDC", "HW") &
          activity !="_Z" &
-         label != "Extra-regio")
+         label != "Extra-regio") %>% 
+  mutate(ref_area=paste0(ref_area, " - ", label))
   
+chart_1002_gg<- function(sto_sel,title){
+temp<- t1002 %>% 
+  filter(sto==sto_sel) %>% 
+   select(ref_area,NUTS, sto, activity, time_period, obs_value ) %>% 
+      group_by(time_period, sto, activity) %>%
+      mutate(share = round(obs_value*100 / obs_value[NUTS =="0"],1)) %>% 
+  filter(NUTS ==2) %>% 
+      ungroup() %>% 
+      na.omit() 
 
+  gg<-ggplot(temp, aes(x = time_period,y = fct_rev(ref_area),fill=share))+    
+  geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",share), data_id = ref_area))+
+  theme_regacc_heatmap+
+    theme(axis.text.x = element_text(size =9,angle = 90),
+          panel.grid.major = element_blank())+
+    scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
+      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
+      scale_y_discrete(expand=c(0,0))+
+  labs(title=paste0(title))
 
-plot_heatmap_t1002("D1","Compensation of Employees")
-plot_heatmap_t1002("P51G","Gross Fixed Capital Formation")
-plot_heatmap_t1002("EMP",  "Employment (HW)")
-plot_heatmap_t1002("SAL",  "Employees (HW)")
+ x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
+               
+  return(x)}
+
+chart_1002_gg("D1","Compensation of Employees")
+chart_1002_gg("P51G","Gross Fixed Capital Formation")
+chart_1002_gg("EMP",  "Employment (HW)")
+chart_1002_gg("SAL",  "Employees (HW)")
 
 ```
 
 
-### Table 1300
+## Table 1300
 
 ```{r 05 T1300}
 
@@ -198,11 +307,33 @@ t1300 <- left_join(NUTS_2021,files) %>%
 		 table_identifier=="T1300" &
            activity =="_Z" &
          unit_measure =="XDC") %>% 
-  unite("sto",c(accounting_entry,sto))
+  unite("sto",c(accounting_entry,sto)) %>% 
+  select(ref_area, label,NUTS,sto, time_period, obs_value ) %>% 
+      group_by(time_period, sto) %>%
+      mutate(share = round(obs_value*100 / obs_value[NUTS =="0"],1)) %>% 
+      filter (NUTS =="2") %>% 
+      na.omit()%>% 
+  mutate(ref_area=paste0(ref_area, " - ", label))
 
-  if (nrow(t1300) > 0){ # not needed now but maybe useful for future developments
-plot_heatmap_t1300("")
-  }
+p<-ggplot(t1300,aes(time_period, fct_rev(ref_area), fill = share)) +
+    geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",share), data_id = ref_area)) +
+ facet_wrap_interactive(ncol = 3,vars(sto),
+  labeller = labeller_interactive(aes(tooltip = paste("Transaction:", sto)))
+)+
+  theme_regacc_heatmap+
+    theme(axis.text.x = element_text(size =9,angle = 90),
+          panel.grid.major = element_blank())+
+    scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
+      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
+      scale_y_discrete(expand=c(0,0))+
+   theme(
+    strip.text.x = element_text_interactive(),
+    strip.text.y = element_text_interactive())
+
+girafe(ggobj = p, width_svg = 10, height_svg = 10,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
 ```
 
 
@@ -225,22 +356,45 @@ rev <- files[activity %in% c("_T","_Z") & NUTS %in% c("0","2","3")&!str_detect(r
 temp<- rev %>% 
   filter(table_identifier=="T1001" & NUTS %in% c("0","2") & !unit_measure %in% c("PC") & sto %in% c("B1G","EMP","POP"))
 
-if (nrow(temp)>0)
-plot_scatter("Revision T1001")
+  plot_scatter <- function(title) {
+          p<- ggplot(temp, aes(rev,revp,color=NUTS))+
+           geom_point_interactive(aes(tooltip=paste("ref_area:",ref_area,"\n","rev:",rev,"\n","revp:",revp,"\n","time_period:",time_period)),size=3)+
+           theme_regacc_scatter +
+           scale_colour_manual(values= c("#0E47CB","#FFCC00","#AF155C"))+
+           scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
+           scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
+        facet_wrap_interactive(ncol = 3,scales="free",vars(sto),
+        labeller = labeller_interactive(aes(tooltip = paste("Transaction:", sto))))+
+          theme(strip.text.x = element_text_interactive(),
+                strip.text.y = element_text_interactive())+
+           ggtitle(title)
+          
+  girafe(ggobj = p, width_svg =8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
+      }
 
+  
+if (nrow(temp)>0)
+plot_scatter("")
+  
 temp<- rev %>% 
   filter(NUTS %in% c("0","2") & unit_measure == "PC")
 
 if (nrow(temp)>0)
-ggplotly(temp %>% 
-           ggplot(aes(T,V,color=NUTS,label=ref_area))+
-           geom_point(aes(text=paste("ref_area:",ref_area,"\n","T:",T,"\n","V:",V,"\n","time_period:",time_period)))+
+p<-  ggplot(temp,aes(T,V,color=NUTS,label=ref_area))+
+           geom_point_interactive(aes(tooltip=paste("ref_area:",ref_area,"\n","T:",T,"\n","V:",V,"\n","time_period:",time_period)),size=3)+
            theme_regacc_scatter +
            scale_colour_ra("primary")+
            scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
            scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
-           ggtitle(""),tooltip="text")
+  ggtitle ("Volume GVA")
 
+girafe(ggobj = p, width_svg = 8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
 ```
 
 ###  Revisions Table 1200
