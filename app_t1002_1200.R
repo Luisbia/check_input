@@ -13,6 +13,8 @@
  library(DT)
  library(data.table)
  library(scales)
+ library(ggiraph)
+ library(dataregacc)
  source("utils/palette.R")
  source("utils/theme_report.R")
 
@@ -144,15 +146,15 @@ df <- rbindlist(list(df, D1, B1G, B1G_per, HW_PS, EMP_POP), use.names = TRUE)
 
 # share in NACE
 
-df[, share_nace := obs_value * 100 / obs_value[activity == "TOTAL"], 
+df[, share_nace := round(obs_value * 100 / obs_value[activity == "TOTAL"],1), 
    by = .(ref_area, type, sto, time_period)]
 
 # share in country
 
-df[, share_nat := obs_value * 100 / obs_value[NUTS == "0"], by = .(type, sto, activity, time_period)]
+df[, share_nat := round(obs_value * 100 / obs_value[NUTS == "0"],1), by = .(type, sto, activity, time_period)]
 
 # time mean
-df[, time_mean := obs_value * 100 / mean(obs_value, na.rm = TRUE), by = .(ref_area, type, sto, activity)]
+df[, time_mean := round(obs_value * 100 / mean(obs_value, na.rm = TRUE),1), by = .(ref_area, type, sto, activity)]
 
 df <- df %>%
   melt(measure.vars = c("obs_value", "share_nace", "share_nat", "time_mean"),
@@ -267,7 +269,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                              multiple = TRUE)
                ),
                
-        mainPanel(plotlyOutput("linePlot", width = "100%", height = "800px")),
+        mainPanel(girafeOutput("linePlot", width = "100%", height = "800px")),
           
           )#mainPanel
         ), #tabPanel
@@ -328,7 +330,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                ),
                
                
-               mainPanel(plotlyOutput("dotPlot", width = "100%", height = "800px")),
+               mainPanel(girafeOutput("dotPlot", width = "100%", height = "800px")),
                
              )#mainPanel
     ),    #tabPanel
@@ -390,7 +392,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                ),
                
                
-               mainPanel(plotlyOutput("scatterPlot", width = "100%", height = "800px")),
+               mainPanel(girafeOutput("scatterPlot", width = "100%", height = "800px")),
                
              )#mainPanel
     ),
@@ -438,7 +440,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                ),
                
                
-               mainPanel(plotlyOutput("scatterPlotb", width = "100%", height = "800px")),
+               mainPanel(girafeOutput("scatterPlotb", width = "100%", height = "800px")),
                
              )#mainPanel
     ),
@@ -506,12 +508,13 @@ server <- function(input, output) {
                type %in% input$type &
                unit_measure %in% input$unit_measure)})
   
-  output$linePlot <- renderPlotly({
+  output$linePlot <- renderGirafe({
     # filter data set with user input
     
     # Build  plot
-    p <- ggplot(df_filter(), aes(time_period, obs_value, group=!!parse_expr(input$group),colour = !!parse_expr(input$colour),  label = label)) +
-      geom_line(size = 0.8)+
+    p <- ggplot(df_filter(), aes(time_period, obs_value, group=!!parse_expr(input$group),colour = !!parse_expr(input$colour))) +
+      geom_line_interactive(aes(tooltip= paste0(ref_area," - ",label,"\n",sto,"\n",type,"\n",activity,"\n",unit_measure),data_id=ref_area),size = 0.8)+
+      geom_point_interactive(aes(tooltip=obs_value,data_id=ref_area))+
       theme_regacc_line+
       scale_colour_luis()+
       scale_y_continuous(breaks = pretty_breaks(3), labels = label_number(),expand=c(0,0.2)) +
@@ -523,17 +526,24 @@ server <- function(input, output) {
     if (input$leg == FALSE) {
       p <- p + theme(legend.position = "none")
     }    else    {
-      p <- p + theme(legend.position = "bottom")
+      p <- p + theme(legend.position = "top")
     }
     # y axis from checkbox
     if (input$freey == FALSE) {
-      p <- p + facet_wrap(~ get(input$facet))
+      p <- p + facet_wrap_interactive(vars(get(input$facet)),
+                                      labeller = labeller_interactive())+
+        theme(strip.text.x = element_text_interactive(),
+              strip.text.y = element_text_interactive())
     }    else    {
-      p <- p + facet_wrap(~ get(input$facet), scales = "free_y")
+      p <- p + facet_wrap_interactive(scales="free_y",vars(get(input$facet)),
+                                      labeller = labeller_interactive())+
+        theme(strip.text.x = element_text_interactive(),
+              strip.text.y = element_text_interactive())
     }
     
     # pass the plot to ggplotly and choose dimensions
-    ggplotly(p)%>% config(displayModeBar = F)#, width = 800, height = 800)
+    girafe(ggobj = p)
+
   } )
   
   regions1 <- reactive({
@@ -554,15 +564,17 @@ server <- function(input, output) {
                                     activity %in% input$activity1 &
                                     unit_measure %in% input$unit_measure1))
   
-  output$dotPlot <- renderPlotly({
+  output$dotPlot <- renderGirafe({
     
 
     
     # Build  plot
-    p1 <- ggplot(df_filter1(), aes(x = fct_reorder(!!parse_expr(input$xaxis1), !!parse_expr(input$yaxis1)), y = !!parse_expr(input$yaxis1), colour = !!parse_expr(input$colour1), label = label)) +
-      geom_point(size= 2) +
+    p1 <- ggplot(df_filter1(), aes(x = fct_reorder(!!parse_expr(input$xaxis1), !!parse_expr(input$yaxis1)), y = !!parse_expr(input$yaxis1), colour = !!parse_expr(input$colour1))) +
+      geom_point_interactive(aes(tooltip=paste0(ref_area," - ",label,"\n",time_period,"\n",sto,"\n",activity,"\n",unit_measure),data_id=ref_area),size= 2) +
       coord_flip() +
       theme_regacc_scatter +
+      theme(axis.title.x = element_blank(),
+            axis.title.y = element_blank())+
       scale_colour_luis()+
       scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))
     
@@ -572,19 +584,25 @@ server <- function(input, output) {
     if (input$leg1 == FALSE) {
       p1 <- p1 + theme(legend.position = "none")
     }    else    {
-      p1 <- p1 + theme(legend.position = "bottom")
+      p1 <- p1 + theme(legend.position = "top")
     }
     
     
     # y axis from checkbox
     if (input$freex == FALSE) {
-      p1 <- p1 + facet_wrap(~ get(input$facet1))
+      p1 <- p1+ facet_wrap_interactive(vars(get(input$facet1)),
+                                   labeller = labeller_interactive())+
+        theme(strip.text.x = element_text_interactive(),
+              strip.text.y = element_text_interactive())
     }    else  {
-      p1 <- p1 + facet_wrap(~ get(input$facet1), scales = "free")
+      p1 <- p1 + facet_wrap_interactive(scales="free_y",vars(get(input$facet1)),
+                                        labeller = labeller_interactive())+
+        theme(strip.text.x = element_text_interactive(),
+              strip.text.y = element_text_interactive())
     }
     
     # pass the plot to ggplotly and choose dimensions
-    ggplotly(p1)%>% config(displayModeBar = F)#, width = 800, height = 800)
+    girafe(ggobj = p1)#, width = 800, height = 800)
   } )
   
   regions2 <- reactive({
@@ -605,14 +623,16 @@ server <- function(input, output) {
                activity %in% input$activity2 &
                unit_measure %in% input$unit_measure2)})
   
-  output$scatterPlot <- renderPlotly({
+  output$scatterPlot <- renderGirafe({
  
     
     # Build  plot
-    p2 <- ggplot(df_filter2(), aes(!!parse_expr(input$xaxis2), !!parse_expr(input$yaxis2), colour = !!parse_expr(input$colour2), label = label)) +
-      geom_point(size= 2) +
+    p2 <- ggplot(df_filter2(), aes(!!parse_expr(input$xaxis2), !!parse_expr(input$yaxis2), colour = !!parse_expr(input$colour2))) +
+      geom_point_interactive(aes(tooltip=paste0(ref_area," - ",label,"\n",time_period),data_id=ref_area),size= 2) +
       theme_regacc_scatter +
       scale_colour_luis() +
+      theme(axis.title.x = element_blank(),
+            axis.title.y = element_blank())+
       scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))+
       scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))
     
@@ -622,20 +642,26 @@ server <- function(input, output) {
     if (input$leg2 == FALSE) {
       p2 <- p2 + theme(legend.position = "none")
     }    else    {
-      p2 <- p2 + theme(legend.position = "bottom")
+      p2 <- p2 + theme(legend.position = "top")
     }
     
     
     # y axis from checkbox
     if (input$freexy == FALSE) {
-      p2 <- p2 + facet_wrap(~ get(input$facet2))
-    }  else   {
-      p2 <- p2 + facet_wrap(~ get(input$facet2), scales = "free")
+      p2 <- p2+ facet_wrap_interactive(vars(get(input$facet2)),
+                                       labeller = labeller_interactive())+
+        theme(strip.text.x = element_text_interactive(),
+              strip.text.y = element_text_interactive())
+    }    else  {
+      p2 <- p2 + facet_wrap_interactive(scales="free",vars(get(input$facet2)),
+                                        labeller = labeller_interactive())+
+        theme(strip.text.x = element_text_interactive(),
+              strip.text.y = element_text_interactive())
     }
-    
-    # pass the plot to ggplotly and choose dimensions
-    ggplotly(p2)%>% config(displayModeBar = F)#, width = 800, height = 800)
-  } )
+    girafe(ggobj = p2)#, width = 800, height = 800)
+  } )  
+
+
   regions2b <- reactive({
     filter(df_scatterb, NUTS == input$NUTS2b)
   })
@@ -653,14 +679,16 @@ server <- function(input, output) {
                sto %in% input$sto2b &
                activity %in% input$activity2b) })
   
-  output$scatterPlotb <- renderPlotly({
+  output$scatterPlotb <- renderGirafe({
     
     
     # Build  plot
-    p2b <- ggplot(df_filter2b(), aes(obs_value, growth, colour = !!parse_expr(input$colour2b), label = label)) +
-      geom_point(size= 2) +
+    p2b <- ggplot(df_filter2b(), aes(obs_value, growth, colour = !!parse_expr(input$colour2b))) +
+      geom_point_interactive(aes(tooltip=paste0(ref_area," - ",label,"\n",time_period),data_id=ref_area),size= 2) +
       theme_regacc_scatter +
       scale_colour_luis() +
+      theme(axis.title.x = element_blank(),
+            axis.title.y = element_blank())+
       scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))+
       scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))
     
@@ -670,22 +698,25 @@ server <- function(input, output) {
     if (input$leg2b == FALSE) {
       p2b <- p2b + theme(legend.position = "none")
     }    else    {
-      p2b <- p2b + theme(legend.position = "bottom")
+      p2b <- p2b + theme(legend.position = "top")
     }
-    
     
     # y axis from checkbox
     if (input$freexyb == FALSE) {
-      p2b <- p2b + facet_wrap(~ get(input$facet2b))
-    }  else   {
-      p2b <- p2b + facet_wrap(~ get(input$facet2b), scales = "free")
+      p2b <- p2b+ facet_wrap_interactive(vars(get(input$facet2b)),
+                                       labeller = labeller_interactive())+
+        theme(strip.text.x = element_text_interactive(),
+              strip.text.y = element_text_interactive())
+    }    else  {
+      p2b <- p2b + facet_wrap_interactive(scales="free",vars(get(input$facet2b)),
+                                        labeller = labeller_interactive())+
+        theme(strip.text.x = element_text_interactive(),
+              strip.text.y = element_text_interactive())
     }
+    girafe(ggobj = p2b)#, width = 800, height = 800)
+  } )  
     
-    # pass the plot to ggplotly and choose dimensions
-    ggplotly(p2b)%>% config(displayModeBar = F)#, width = 800, height = 800)
-  } )
 
-  
   # prepare data frame for table (only values, no derived indicators)
   regions5 <- reactive({
     filter(df_data, NUTS == input$NUTS5)
