@@ -209,7 +209,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                   tags$style(HTML(".col-lg-4 { width: 20%;}
                            .col-lg-8 { width: 80%;}")),
                   # Title to be shown @ browser (to get rid of html tags)
-                  tags$title("Regional Accounts Data Analysis")
+                  tags$title("Regional Accounts Data Analysis: Tables 1002 and 1200")
                 ),
   tabsetPanel(
     tabPanel("Line plot",
@@ -517,8 +517,8 @@ server <- function(input, output) {
       geom_point_interactive(aes(tooltip=obs_value,data_id=ref_area))+
       theme_regacc_line+
       scale_colour_luis()+
-      scale_y_continuous(breaks = pretty_breaks(3), labels = label_number(),expand=c(0,0.2)) +
-      scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0,0.2))
+      scale_y_continuous(breaks = pretty_breaks(3), labels = label_number(),expand=c(0.1,0.2)) +
+      scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0.1,0.2))
     
     
     # legend
@@ -569,14 +569,13 @@ server <- function(input, output) {
 
     
     # Build  plot
-    p1 <- ggplot(df_filter1(), aes(x = fct_reorder(!!parse_expr(input$xaxis1), !!parse_expr(input$yaxis1)), y = !!parse_expr(input$yaxis1), colour = !!parse_expr(input$colour1))) +
+    p1 <- ggplot(df_filter1(), aes(y = fct_reorder(!!parse_expr(input$xaxis1), !!parse_expr(input$yaxis1)), x = !!parse_expr(input$yaxis1), colour = !!parse_expr(input$colour1))) +
       geom_point_interactive(aes(tooltip=paste0(ref_area," - ",label,"\n",time_period,"\n",sto,"\n",activity,"\n",unit_measure),data_id=ref_area),size= 2) +
-      coord_flip() +
       theme_regacc_scatter +
       theme(axis.title.x = element_blank(),
             axis.title.y = element_blank())+
       scale_colour_luis()+
-      scale_y_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1))
+      scale_x_continuous( breaks = pretty_breaks(3), labels = label_number(accuracy = 1),expand=c(0.1,0.2))
     
     
     # legend
@@ -628,7 +627,7 @@ server <- function(input, output) {
     
     # Build  plot
     p2 <- ggplot(df_filter2(), aes(!!parse_expr(input$xaxis2), !!parse_expr(input$yaxis2), colour = !!parse_expr(input$colour2))) +
-      geom_point_interactive(aes(tooltip=paste0(ref_area," - ",label,"\n",time_period),data_id=ref_area),size= 2) +
+      geom_point_interactive(aes(tooltip=paste0(ref_area," - ",label,"\n",time_period,"\n", sto,"\n",activity,"\n",unit_measure),data_id=ref_area),size= 2) +
       theme_regacc_scatter +
       scale_colour_luis() +
       theme(axis.title.x = element_blank(),
@@ -684,7 +683,7 @@ server <- function(input, output) {
     
     # Build  plot
     p2b <- ggplot(df_filter2b(), aes(obs_value, growth, colour = !!parse_expr(input$colour2b))) +
-      geom_point_interactive(aes(tooltip=paste0(ref_area," - ",label,"\n",time_period),data_id=ref_area),size= 2) +
+      geom_point_interactive(aes(tooltip=paste0(ref_area," - ",label,"\n",time_period, "\n",sto, "\n",activity),data_id=ref_area),size= 2) +
       theme_regacc_scatter +
       scale_colour_luis() +
       theme(axis.title.x = element_blank(),

@@ -51,11 +51,6 @@ source("05_auxiliary.R")
 
 ### Visualisations ----
 
-rmarkdown::render("overview/main_indicators.Rmd", 
-                  params = list(report = country_sel),
-                  output_file = paste0(country_sel,"_",
-                                       "_main_indicators.html"))
-
 shiny_t1001 <- function(country_sel) {
   .GlobalEnv$country_sel <- country_sel
   shiny::runApp("app_t1001.R", launch.browser = TRUE)
@@ -74,6 +69,12 @@ shiny_t1300 <- function(country_sel) {
 }
 shiny_t1300(country_sel)
 
+### After validation
+### Main indicators
+rmarkdown::render("overview/main_indicators.Rmd", 
+                  params = list(report = country_sel),
+                  output_file = paste0(country_sel,"_",
+                                       "_main_indicators.html"))
 
 ### NQR ----
 

@@ -196,10 +196,10 @@ gvagr<- val %>%
   filter(unit_measure=="PC" & table_identifier=="T1001")
 
 lasty<- val %>% 
-  filter(table_identifier=="T1001" & time_period>= 2020 & unit_measure !="PC")
+  filter(table_identifier=="T1001" & time_period== 2021 & unit_measure !="PC")
 
 prevy<- val %>% 
-  filter(table_identifier=="T1200" & time_period< 2020 & NUTS!="3" & activity %in% c("_T","_Z")) %>% # remove GVA in PYP
+  filter(table_identifier=="T1200" & time_period< 2021 & NUTS!="3" & activity %in% c("_T","_Z")) %>% # remove GVA in PYP
   mutate(table_identifier="T1001")
 
 no_t1001<- val %>% 
