@@ -15,32 +15,32 @@ params:
 
 body, td {
    font-size: 16px;
-   font-family: Raleway;
+   font-family: Cambria;
 }
 code.r{
   font-size: 14px;
-  font-family: Raleway;
+  font-family: Cambria;
 }
 td {
     font-size: 12px;
-    font-family: Raleway;
+    font-family: Cambria;
 }
 h1, h2, h3, h4, h5, h6 {
    font-size: 20px;
-   font-family: Raleway;  
-  color: #AF155C;
+   font-family: Cambria;  
+  color: #0E47CB;
 }
 a {
-    font-family: Raleway;
-    color: #AF155C;
+    font-family: Cambria;
+    color: #0E47CB;
 }
 body { 
 background-color: #F3F6FC; 
 }
 .tocify .list-group-item {
  background-color: #F3F6FC; 
- font-family: Raleway;
- color: #AF155C;
+ font-family: Cambria;
+ color: #0E47CB;
  font-style:bold
 
 </style>
@@ -123,7 +123,7 @@ df <- left_join(df, NUTS2021) %>%
 ```
 
 
-```{r}
+```{r,fig.height=9, fig.width=12}
 p <- ggplot(df, aes(time_period, values, colour = series, label = label))+
   geom_line(size = 0.7)+
   facet_wrap(~ref_area, scales="free_y")+
@@ -142,13 +142,13 @@ df_plots <-  df %>%
   nest() 
 
 df_plots <- df_plots %>% 
-  mutate(plot = map2(data, ref_area, ~ ggplot(data = .x, aes(x = time_period, y = values,colour = series)) +
+  mutate(plot = map2(data, ref_area, ~ ggplot(data = .x, aes(x = time_period, y = values,colour = series)))) +
                        ggtitle(paste0("Geo:", .y)) +
                        geom_line(size = 0.7)+
                        theme_regacc_line+
                       scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(),expand=c(0,0.2))+
                      scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(),expand=c(0,0.2))+
-                      scale_colour_luis() ))
+  scale_colour_manual(values=c("#0E47CB", "#FFCC00"))+
 
 walk(df_plots$plot,print)
 ```

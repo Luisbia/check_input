@@ -1,13 +1,14 @@
 library(here)
 options(scipen=999)
 data<- read_parquet(here("data","denodo","all_primary.parquet")) %>% 
-  filter(table_identifier=="T1001_1200" & type =="V")
-
+  filter(table_identifier=="T1001_1200" & type =="V") 
 
 create_table_REGIO<- function (dat=data, unit_measure, sto, transformation){
   table <- dat %>%
     filter(unit_measure == {{unit_measure}} & sto == {{sto}} & transformation =={{transformation}}) %>%
-    select(country,NUTS,ref_area,time_period,obs_value) %>% 
+    select(country,NUTS,ref_area,time_period,obs_value) %>%
+    mutate(ref_area=str_replace(ref_area,"B6","EU27_2020"),
+           country=str_replace(country,"B6","EU27")) %>% 
     arrange (time_period) %>% 
     pivot_wider(names_from=time_period,
                 values_from=obs_value) %>% 

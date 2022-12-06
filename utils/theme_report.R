@@ -1,4 +1,4 @@
-font <- "Raleway"
+font <- "Cambria"
 dark_text <- "#262B38"
 mid_text <- "#51555F"
 light_text<- "#7C7F87"
@@ -31,11 +31,11 @@ theme_regacc_line <- theme_minimal (base_size = 12)+
         plot.title = element_text(family = font,
                                   size = rel(1.2),
                                   face = "bold",
-                                  color = "#AF155C",
+                                  color = "#0E47CB",
                                   margin = margin(12, 0, 8, 0)),
         strip.background = element_rect(fill = "#F3F6FC", 
                                         colour = NA),
-        strip.text = element_text(size = rel(1.4), hjust = 0.1, color="#AF155C",face="bold", family=font),
+        strip.text = element_text(size = rel(1.4), hjust = 0.1, color="#0E47CB",face="bold", family=font),
         strip.placement = "outside",
         panel.spacing = unit(2, "lines")
   )

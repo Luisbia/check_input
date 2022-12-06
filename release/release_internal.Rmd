@@ -6,7 +6,39 @@ output:
   html_document: 
     theme: readable
 ---
+<style type="text/css">
 
+body, td {
+   font-size: 16px;
+   font-family: Cambria;
+}
+code.r{
+  font-size: 14px;
+  font-family: Cambria;
+}
+td {
+    font-size: 12px;
+    font-family: Cambria;
+}
+h1, h2, h3, h4, h5, h6 {
+   font-size: 20px;
+   font-family: Cambria;  
+  color: #0E47CB;
+}
+a {
+    font-family: Cambria;
+    color: #0E47CB;
+}
+body { 
+background-color: #F3F6FC; 
+}
+.tocify .list-group-item {
+ background-color: #F3F6FC; 
+ font-family: Cambria;
+ color: #0E47CB;
+ font-style:bold
+
+</style>
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
@@ -38,10 +70,10 @@ new<-read_parquet(here("data","denodo","all_primary.parquet")) %>%
                values_from=obs_value) %>%
   drop_na() 
   
-as.datatable(formattable(new, list(`2020` = color_bar("#B656BD"),
-                                   `2021` = color_bar("#B656BD"))),  filter = "top", class = "stripe hover", extensions = "Buttons",
+as.datatable(formattable(new, list(`2020` = color_bar("#FFCC00"),
+                                   `2021` = color_bar("#FFCC00"))),  filter = "top", class = "stripe hover", extensions = "Buttons",
              options = list(  lengthMenu = list(c(20,50,200, -1), c("20","50","200", "All")),
-                              pageLength = 50, autoWidth = TRUE,  dom = "Blfrtip", buttons = c("excel")),
+                              pageLength = 50, autoWidth = TRUE,  dom = "Blfrtip", buttons = c("csv","excel","pdf")),
              rownames= FALSE
 )  
 

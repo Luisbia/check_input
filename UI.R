@@ -26,7 +26,7 @@ rmarkdown::render("01_basic_info.Rmd",
                   output_file = paste0("basic_info/",country_sel,"_",format(Sys.time(),"%Y-%m-%d"),"_report.html"))
 
 ### Update NAMA and NFSA (optional) ----
-denodo<- list.files(path="U:/03_Regional Accounts/03D_Data Production/2022/R/check_input/data/denodo",
+denodo<- list.files(path="U:/03_Regional Accounts/03D_Data Production/2022/R/regacc/data/denodo",
                     pattern ="csv$",
                     full.names=TRUE)
 file.copy(denodo, "data/denodo", overwrite=TRUE, copy.date=TRUE)
@@ -59,7 +59,7 @@ shiny_t1001(country_sel)
 
 shiny_t1002_1200 <- function(country_sel) {
   .GlobalEnv$country_sel <- country_sel
-  shiny::runApp("app_t1002_1200_new.R", launch.browser = TRUE)
+  shiny::runApp("app_t1002_1200.R", launch.browser = TRUE)
 }
 shiny_t1002_1200(country_sel)
 
@@ -70,6 +70,9 @@ shiny_t1300 <- function(country_sel) {
 shiny_t1300(country_sel)
 
 ### After validation
+file.copy("U:/03_Regional Accounts/03D_Data Production/2022/R/regacc/data/denodo/all_primary.parquet",
+          "data/denodo/all_primary.parquet", 
+          overwrite=TRUE, copy.date=TRUE)
 ### Main indicators
 rmarkdown::render("overview/main_indicators.Rmd", 
                   params = list(report = country_sel),

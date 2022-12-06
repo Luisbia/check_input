@@ -15,37 +15,39 @@ editor_options:
   chunk_output_type: console
 params:
   report: DK
+  height: 8
+  width: 8
 ---
 <style type="text/css">
 
 body, td {
    font-size: 16px;
-   font-family: Raleway;
+   font-family: Cambria;
 }
 code.r{
   font-size: 14px;
-  font-family: Raleway;
+  font-family: Cambria;
 }
 td {
     font-size: 12px;
-    font-family: Raleway;
+    font-family: Cambria;
 }
 h1, h2, h3, h4, h5, h6 {
    font-size: 20px;
-   font-family: Raleway;  
-  color: #AF155C;
+   font-family: Cambria;  
+  color: #0E47CB;
 }
 a {
-    font-family: Raleway;
-    color: #AF155C;
+    font-family: Cambria;
+    color: #0E47CB;
 }
 body { 
 background-color: #F3F6FC; 
 }
 .tocify .list-group-item {
  background-color: #F3F6FC; 
- font-family: Raleway;
- color: #AF155C;
+ font-family: Cambria;
+ color: #0E47CB;
  font-style:bold
 
 </style>
@@ -106,8 +108,6 @@ NUTS_2021<-dataregacc::NUTS_2021 %>%
 
 
 ```{r, aux_scripts}
-# plot functions
-source("utils/plot_report.R")
 # custom theme
 source("utils/theme_report.R")
 ```
@@ -192,7 +192,7 @@ chart_vol_gg<- function(title){
       scale_y_discrete(expand=c(0,0))+
   labs(title=paste0(title))
 
- x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+ x <- girafe(ggobj = gg, width_svg = params$width, height_svg = params$height,
              options = list(
                opts_hover_inv(css = "opacity:0.1;"),
                opts_hover(css = "stroke-width:2;")))
@@ -227,6 +227,8 @@ temp<- t1200 %>%
 
   gg<-ggplot(temp, aes(x = time_period,y = fct_rev(ref_area),fill=share))+    
   geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",share), data_id = ref_area))+
+     facet_wrap_interactive(ncol = 3,vars(activity),
+  labeller = labeller_interactive(aes(tooltip = paste("Activity:", activity))))+
   theme_regacc_heatmap+
     theme(axis.text.x = element_text(size =9,angle = 90),
           panel.grid.major = element_blank())+
@@ -235,7 +237,7 @@ temp<- t1200 %>%
       scale_y_discrete(expand=c(0,0))+
   labs(title=paste0(title))
 
- x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+ x <- girafe(ggobj = gg, width_svg = params$width, height_svg = params$height,
              options = list(
                opts_hover_inv(css = "opacity:0.1;"),
                opts_hover(css = "stroke-width:2;")))
@@ -275,6 +277,8 @@ temp<- t1002 %>%
 
   gg<-ggplot(temp, aes(x = time_period,y = fct_rev(ref_area),fill=share))+    
   geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",share), data_id = ref_area))+
+ facet_wrap_interactive(ncol = 3,vars(activity),
+  labeller = labeller_interactive(aes(tooltip = paste("Activity:", activity))))+
   theme_regacc_heatmap+
     theme(axis.text.x = element_text(size =9,angle = 90),
           panel.grid.major = element_blank())+
@@ -283,7 +287,7 @@ temp<- t1002 %>%
       scale_y_discrete(expand=c(0,0))+
   labs(title=paste0(title))
 
- x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+ x <- girafe(ggobj = gg, width_svg = params$width, height_svg = params$height,
              options = list(
                opts_hover_inv(css = "opacity:0.1;"),
                opts_hover(css = "stroke-width:2;")))
@@ -330,7 +334,7 @@ p<-ggplot(t1300,aes(time_period, fct_rev(ref_area), fill = share)) +
     strip.text.x = element_text_interactive(),
     strip.text.y = element_text_interactive())
 
-girafe(ggobj = p, width_svg = 10, height_svg = 10,
+girafe(ggobj = p, width_svg = params$width, height_svg = params$height,
              options = list(
                opts_hover_inv(css = "opacity:0.1;"),
                opts_hover(css = "stroke-width:2;")))
@@ -369,7 +373,7 @@ temp<- rev %>%
                 strip.text.y = element_text_interactive())+
            ggtitle(title)
           
-  girafe(ggobj = p, width_svg =8, height_svg = 6,
+  girafe(ggobj = p, width_svg = params$width, height_svg = params$height,
              options = list(
                opts_hover_inv(css = "opacity:0.1;"),
                opts_hover(css = "stroke-width:2;")))

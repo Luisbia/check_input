@@ -18,32 +18,32 @@ editor_options:
 
 body, td {
    font-size: 16px;
-   font-family: Raleway;
+   font-family: Cambria;
 }
 code.r{
   font-size: 14px;
-  font-family: Raleway;
+  font-family: Cambria;
 }
 td {
     font-size: 12px;
-    font-family: Raleway;
+    font-family: Cambria;
 }
 h1, h2, h3, h4, h5, h6 {
    font-size: 20px;
-   font-family: Raleway;  
-  color: #AF155C;
+   font-family: Cambria;  
+  color: #0E47CB;
 }
 a {
-    font-family: Raleway;
-    color: #AF155C;
+    font-family: Cambria;
+    color: #0E47CB;
 }
 body { 
 background-color: #F3F6FC; 
 }
 .tocify .list-group-item {
  background-color: #F3F6FC; 
- font-family: Raleway;
- color: #AF155C;
+ font-family: Cambria;
+ color: #0E47CB;
  font-style:bold
 
 </style>
@@ -54,15 +54,15 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 # About
 
-This is a soft but comprehensive guide detailing in some detail the steps to follow during the production process of Regional Accounts in 2022. It complements and tries to avoid to repeat what was explained, mainly regarding coding, in the 2021 guide (*U:/03_Regional Accounts/03I_Documentation/REGACC_process/codebook_2021/index.html*). Coding aspects are restricted to some novelties and instead the guide tries to illustrate the logic of why some things are done in a specific way and the sequential steps of the process Some practical examples of what to look and not miss on each step are included. It will additionally detail certain improvements implemented this year, which in many cases are not evident to the end user without digging into the code.
+This is a soft but comprehensive guide detailing  the steps to follow during the production process of Regional Accounts in 2022. It complements and tries to avoid to repeat what was explained, mainly regarding coding, in the 2021 guide (*U:/03_Regional Accounts/03I_Documentation/REGACC_process/codebook_2021/index.html*). Coding aspects are restricted to some novelties and instead the guide tries to illustrate the logic of why some things are done in a specific way and the sequential steps of the process Some practical examples of what to look and not miss on each step are included. It will additionally detail certain improvements implemented this year, which in many cases are not evident to the end user without digging into the code.
 
 ## Pre-requisites
 
-For the production process we have minimised IT dependencies. There are things that are needed for the production process (FameFeed, Matis, etc) but for most steps the only things we would need are a network connection to the server with the data in the first step and R and Rstudio with some packages installed for the remaining steps.
+For the production process we have minimised IT dependencies. There are things that are needed for the production process (FameFeed, Matis, etc) but for most steps the only things we would need are a network connection to the server with the data in the first step and R and Rstudio with some packages installed for the remaining steps. A connection to Denodo is needed to create the file with the final results in Matis but it can be produced centrally.
 
 ## Tacit knowledge
 
-Some tacit knowledge on the process is helpful. The validation procedure is quite exhaustive and using all the possibilities can lead to devote to a counterproductive amount of time to deal with one country. The following table classifies countries according to my perceived level of difficulty in dealing with them in the past. Problems can be due to recurring technical issues in the files provided, quality issues of the data, previous experiences in receiving several updates, number of regions, etc.
+Some tacit knowledge on the process is helpful. The validation procedure is quite exhaustive and using all the possibilities can lead to devote a counterproductive amount of time to deal with one country. The following table classifies countries according to my perceived level of difficulty in dealing with them in the past. Problems can be due to recurring technical issues in the files provided, quality issues of the data, previous experiences in receiving several updates, number of regions, etc.
 
 Time will be better employed dealing with more problematic countries, and they should be dealt with priority over the other countries if we are time constrained.
 
@@ -76,7 +76,7 @@ Time will be better employed dealing with more problematic countries, and they s
 
 ## Most important changes compared to 2021
 
--   A more logical workflow. All steps are included in a single project and more data is shared across processes.
+-   A more logical workflow. All processes are included in a single project and data is shared across processes.
 
 -   Further automatisation of some processes.
 
@@ -86,7 +86,7 @@ Time will be better employed dealing with more problematic countries, and they s
 
 -   Use of internal `{regacc}` and `{dataregacc}` packages.
 
--   Harmonising the classification and codes used at different steps. You will use this codes consistently: **country, ref_area, NUTS, sto, activity, accounting entry, unit_measure, time_period and obs_value**.
+-   Harmonising the classification and codes used at different steps. You will use this column names all the time: **country, ref_area, NUTS, sto, activity, accounting entry, unit_measure, time_period and obs_value**.
 
 -   Different threshold by unit measure and encoding of some country exceptions to avoid showing inconsistencies we are already aware of.
 
@@ -94,20 +94,23 @@ Time will be better employed dealing with more problematic countries, and they s
 
 -   Handling of NA values in NACE additivity checks.
 
--   `{data.table}` is used in a few more more places than in the past.
 
--   More consistent look of the charts.
+-   More consistent look of the charts and reports.
 
 -  A new predefined scatterplot to better detect outliers in the exploratory shiny app. 
 
--  Improve shiny re-activity to select regions.
+-  Improve shiny reactivity to select regions.
+
+- `{here}` is used for dealing with now more complex cases of relative folders.
+
+- `{ggiraph}` replaces `{plotly}` for wrapping ggplot charts in javascript in most places. 
 
 
 All the needed files are in the folder in *U:/03_Regional Accounts/03D_Data Production/2022/R/regacc* and should be copied to a hard drive or usb stick, not the H:/ or any other folder location if we want them to run fast.  
 
 # Steps before validation
 
-The script `UI.R` provides the sequential steps to be followed when analysing incoming data. It starts by loading some libraries and the user needs to type the country it is going to analyze. It will bring the xml files from the `INPUT`folder if the data has not been loaded with FameFeedof from the `DONE`folder if they have been loaded. It is preferable generally to do all these steps before loading data in Matis as it is a few seconds faster to do it from the `INPUT`folder and we will need to wait for FameFeed to finish, which can take a long time for countries with many regions. The user is also suggested to copy locally the country metadata file from the server.
+The script `UI.R` provides the sequential steps to be followed when analysing incoming data and the next steps after validation. It starts by loading some libraries and the user needs to type the country it is going to analyze. It will bring the xml files from the `INPUT`folder if the data has not been loaded with FameFeed or from the `DONE`folder if they have been loaded. It is preferable generally to do all these steps before loading data in Matis as it is a few seconds faster to do it from the `INPUT`folder and we will need to wait for FameFeed to finish, which can take a long time for countries with many regions. The user is also suggested to copy locally the country metadata file from the server.
 
 ## Basic information and building the files
 
@@ -123,18 +126,18 @@ This will produce a day-stamped html file in the folder  `/basic_info` and prepa
 
 ### Metadata
 
-We have prepared (darft) metadata files according to the template discussed in the 2022 EG RA meeting.
+We have prepared (draft) metadata files according to the template discussed in the 2022 EG RA meeting.
 
 The xml files are read and the following information is presented:
 
 ### Periods reported by table
 
-Please note that if a file included 2000-2008 and another 2009-2021 the report will show 2000-2021 as the reported period. If only 2009-2021 is reported in the files that is what it will show.
+Please note that if a file included 2000-2008 and another 2009-2021 the report will show 2000-2021 as the reported period. If only 2009-2021 is reported in the files, that is what it will show.
 
 
 ### Embargo dates
 
-Not in general a very relevant issue for us as we publish the data two months later but some countries (**Greece**, **Croatia**, **Ireland**) might include a wrong date or forget to include it or it might require that we negotiate the publication date with them.
+Not in general a very relevant issue for us as we publish the data two months later but some countries (**Greece**, **Croatia**, **Ireland**) might include a wrong date or forget to include it or it might be needed that we negotiate the publication date with them.
 
 ```{r, echo=FALSE,warning=FALSE,message=FALSE}
 options(tidyverse.quiet = TRUE)
@@ -142,6 +145,7 @@ library(here)
 library(tidyverse)
 library(dataregacc)
 library(regacc)
+library(knitr)
 check_packages()
 
 country_sel <- "IE"
@@ -346,7 +350,7 @@ This is a necessary step to build a file with all the information we need for th
 
 #### Temporary series
 
-It starts by reading (again) the xml files for the country in `data/xml`. However, in this occasion we will ignore all the contextual information (flags, comments, etc) and get only the dimensions needed to identify the numbers. It also takes one single value per observation. This will not be normally needed but occasionally we received transmissions like this:
+It starts by reading (again) the xml files for the country in `data/xml`. However, in this occasion we will ignore all the contextual information (flags, comments, etc) and get only the dimensions needed to identify the numbers. It takes one single value per observation. This will normally not needed as most countries provide full transmissions but occasionally we receive transmissions like this:
 
 ```{r, echo=FALSE, message=FALSE,warning=FALSE}
 library(tidyverse)
@@ -359,7 +363,7 @@ de<-regacc::load_xml(folder=here("doc","data","xml"),
 knitr::kable(de)
 ```
 
-Germany corrected population for a particular year and regions (DED2, DED4) and did not provide the unchanged data. This is quite an important difference between REGACC and other domains with several implications for the use of common tools which we will no describe here.
+Germany corrected population for a particular year and regions (DED2, DED4) and did not provide the unchanged data for other regions. This is quite an important difference between REGACC and other domains with several implications for the use of common tools which we will no describe here.
 
 While building the csv file the data is consolidated with previous transmissions and the latest value is kept.
 
@@ -379,7 +383,7 @@ The created file will include the newest values for DED2 and DED4 and the previo
 
 For validated we will use the series internally available in `{dataregacc}`. That means that they are static and we will not be including in the file the most recent validated data (after October 2022). In the case that we have validated some series and we receive updates, the validated series will still be the same ones as before.
 
-We need to do some transformations in the series to create a table t1001 which takes the data up to 2019 from t1200 and only keeps the validated data from t1001 for 2020, as there might be outdated (validated two or three years ago) t1001 tables. This happens if the country usually reports only the latest year in t1001. We will need to make an exception for volume data that is only reported in the table.
+We need to do some transformations in the series to create a table t1001 which takes the data up to 2020 from t1200 and only keeps the validated data from t1001 for 2021, as there might be outdated (validated two or three years ago) t1001 tables. This happens if the country usually reports only the latest year in t1001. We will need to make an exception for volume data that is only reported in the table t1001.
 
 ```{r,eval=FALSE}
 val<- dataregacc::validated %>% 
@@ -390,10 +394,10 @@ gvagr<- val %>%
   filter(unit_measure=="PC")
 
 lasty<- val %>% 
-  filter(table_identifier=="T1001" & time_period>= 2020 & unit_measure=="XDC")# remove GVA in PYP
+  filter(table_identifier=="T1001" & time_period= 2021 & unit_measure=="XDC")# remove GVA in PYP
 
 prevy<- val %>% 
-  filter(table_identifier=="T1200" & time_period< 2020 & NUTS!="3" & activity %in% c("_T","_Z")) %>% # remove GVA in PYP
+  filter(table_identifier=="T1200" & time_period< 2021 & NUTS!="3" & activity %in% c("_T","_Z")) %>% # remove GVA in PYP
   mutate(table_identifier="T1001")
 
 no_t1001<- val %>% 
@@ -455,7 +459,7 @@ The next step is to perform some basic checks (additivity, consistency, etc). A 
 source("04_basic_checks.R")
 ```
 
-We have moved them ahead in the sequence compared to last year as we were using mainly the excel file output instead of the report output. Contrary to the report they should also work on countries not sending particular tables or incomplete tables, However, not all cases might be covered and may not run in all occasions. It will have to be fixed manually if that happens.
+We have moved them ahead in the sequence compared to last year as we were using mainly the excel file output instead of the report output. Contrary to the report, they should also work on countries not sending particular tables or incomplete tables, However, not all cases might be covered and may not run in all occasions. It will have to be fixed manually if that happens.
 
 Another advantage is that we can easily change the thresholds at the beginning of the script from the default ones if we want. 
 
@@ -529,9 +533,9 @@ knitr::kable(t1002_ext)
 
 ### NACE aggregation
 
-The same thresholds are used for the NACE aggregation. It uses `regacc::check_NACE()`.The additivity of data in volume which requires a different calculation is done in a different section. 
+The same thresholds are used for the NACE aggregation. It uses `regacc::check_NACE()`. The additivity of data in volume which requires a different calculation is done in a different section. 
 
-An improvement implemented this year is to handle the very specific case of extra-regio. The NUTS additivity checks are done with `summarise(sum(...,na.rm = TRUE))`, that means that NA values are de facto considered zeroes (if all are NA, NA is returned and if there are some NAs they are considered as zero). However NACE additivity checks are done with `mutate()`. In that case, if there is an NA value the sum is not done. This serve well the case when we have GTJ but not GTI and J in NUTS 3 but Extra-regio is a particular case for some countries.
+An improvement implemented this year is to handle the very specific case of extra-regio. The NUTS additivity checks are done with `summarise(sum(...,na.rm = TRUE))`, which implies that NA values are de facto considered zeroes (if all are NA, NA is returned and if there are some NAs they are considered as zero). However NACE additivity checks are done with `mutate()`. In that case, if there is an NA value the sum is not done. This serve well the case when we have GTJ but not GTI and J in NUTS 3, but Extra-regio is a particular case for some countries.
 
 ```{r,echo=FALSE,warning=FALSE,message=FALSE,}
 library(tidyverse)
@@ -596,7 +600,7 @@ Works the same way as the NACE aggregation and uses `regacc::check_NUTS()`.
 
 Check that values are not negative (except for volume change of Value Added). Some exceptions for Value Added and Gross Fixed Capital Formation can be expected (and hopefully documented). It is also more common in NACE C or A.
 
-We found several cases mainly due to rounding issues for the variable self-employed which is not reported by countries but calculated by us. In such cases we should make an effort to show the issue to the countries in and understandable way.
+We found several cases mainly due to rounding issues for the variable self-employed which is not reported by countries but calculated by us. In such cases, we should make an effort to show the issue to the countries in and understandable way (showing simultaneously EMP, SAL and the calculated SELF).
 
 ```{r,echo=FALSE,warning=FALSE,message=FALSE}
 country_sel<-"DK"
@@ -659,11 +663,13 @@ In order to check the volume additivity, in the past we were deriving previous y
 
 ## Report
 
-We have removed many elements of the full report which have been added to basic report. When we arrive at this step we should have a complete transmission that satisfies the minimum requirements and we start a more analytic validation process. The report will provide some, mainly graphical, basic elements to detect in which areas we should, if needed, investigate further. It creates a day stamped html file in `report/` when executing.
+We have removed many elements of the full report which have been added to basic report. When we arrive at this step we should have a complete transmission that satisfies the minimum requirements and we start a more analytic validation process. The report will provide some, mainly graphical, basic elements to detect in which areas we should, if needed, investigate further. It creates a day stamped html file in `report/` when executing. There is an argument to choose the height and width of the charts (8x8) works for most countries but fro some particular cases (DE, FR, IT) a bigger number would be more appropriate or smaller (SI, LV, EE)
 
 ```{r, eval=FALSE}
 rmarkdown::render("03_report.Rmd", 
-                  params = list(report = country_sel),
+                  params = list(report = country_sel,
+                                height = 8,
+                                width = 8),
                   output_file = paste0("report/",
                                        country_sel,"_",
                                        format(Sys.time(),"%Y-%m-%d"),
@@ -676,6 +682,9 @@ rmarkdown::render("03_report.Rmd",
 Heatmap charts allow us to verify visually the reporting and detect some possible outliers. The heat maps are different for table 1001 than for the other tables. For table 1001 it shows a percentage change compared to the previous year and we should mainly look at the latest period reported.
 
 ```{r, echo=FALSE}
+library(ggiraph)
+source(here("utils","theme_report.R"))
+
 country_sel<-"DK"
 files<-list.files(path=here("data","csv"),
            pattern= glob2rx(paste0("*",country_sel,"*")),
@@ -689,102 +698,6 @@ files<-list.files(path=here("data","csv"),
   pull() %>% 
  fread() %>%
 .[,NUTS:=as.factor(NUTS)] 
-
-font <- "MS Sans Serif"
-dark_text <- "#262B38"
-mid_text <- "#51555F"
-light_text<- "#7C7F87"
-theme_regacc_line <- theme_minimal (base_size = 12)+
-  theme(text = element_text(colour = mid_text, family = font, lineheight = 1.1),
-        plot.background = element_rect(fill= "#FFFFFF", 
-                                       colour = light_text),
-        panel.background = element_rect(fill= "#F3F6FC", 
-                                        colour = light_text),
-        panel.grid.major.y = element_line(colour="#D4D5D7"),
-        axis.line.x = element_line(colour=light_text),
-        axis.line.y = element_line(colour=light_text),
-        axis.text.x = element_text(family = font,
-                                   size = rel(1.0),
-                                   color = mid_text),
-        axis.text.y= element_text(family = font,
-                                  size = rel(1.0),
-                                  color = mid_text),
-        axis.ticks = element_line(size =rel(1.0),
-                                  colour = dark_text),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.position = "right",
-        legend.title = element_blank(),
-        legend.key = ggplot2::element_blank(),
-        legend.background =  ggplot2::element_blank(),
-        legend.text =element_text(family = font,
-                                  size = rel(1.0),
-                                  color = light_text),
-        plot.title = element_text(family = font,
-                                  size = rel(1.2),
-                                  face = "bold",
-                                  color = dark_text,
-                                  margin = margin(12, 0, 8, 0)),
-        strip.background = element_rect(fill = "#F3F6FC", 
-                                        colour = NA),
-        strip.text = element_text(size = rel(1.4), hjust = 0.1, color=mid_text,face="bold", family=font),
-        strip.placement = "outside",
-        panel.spacing = unit(2, "lines")
-  )
-
-theme_regacc_scatter <- theme_regacc_line+
-  theme(panel.grid.major.x = element_line(colour="#D4D5D7"),
-        axis.line.x = element_line(colour=light_text, 
-                                   size =rel(1.0)),
-        axis.line.y = element_line(colour=light_text, 
-                                   size= rel(1.0)),
-        axis.text.x = element_text(colour=light_text, 
-                                   size =rel (0.8)),
-        axis.text.y= element_text(colour=light_text, 
-                                  size= rel(1.0), 
-                                  hjust=0),
-        axis.ticks = element_line(size =rel(1.0),
-                                  colour=dark_text),
-        axis.title.x = element_text(size = rel(0.9),
-                                    colour=light_text,
-                                    angle = 0, 
-                                    vjust = 0.5,
-                                    face = "italic"),
-        axis.title.y = element_text(size = rel(0.9),
-                                    colour=light_text,
-                                    angle = 90, 
-                                    vjust = 0.5,
-                                    face = "italic"),
-        legend.position = "right",
-         )
-
-theme_regacc_heatmap <- theme_regacc_line + 
-  theme(axis.title = element_blank(), #axis titles
-        axis.line.x = element_blank(),
-        axis.line.y = element_blank(),
-        axis.text.x = element_text(colour = light_text, size = rel(0.8)),
-        axis.text.y = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        legend.position="right",
-        axis.ticks = element_blank(),
-        panel.background = element_rect(fill= "#FFFFFF", 
-                                        colour = light_text))
-
-plot_heatmap_t1001<- function(x,title){
-  t1001 %>%
-    filter(sto == x) %>%  
-    select(ref_area, sto, activity, time_period, change) %>% 
-    na.omit() %>% 
-    #group_by(ref_area, sto, activity) %>%
-    #mutate(norm = round(obs_value / mean(obs_value, na.rm = TRUE),1)) %>% 
-    ggplot(aes(time_period, fct_rev(ref_area), fill = change)) +
-    geom_tile(aes(text=paste("ref_area:",ref_area,"\n","change:",change,"\n","time_period:",time_period))) +
-    theme_regacc_heatmap+
-    theme(axis.text.x = element_text(size =9,angle = 90))+
-    scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
-      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
-    ggtitle(paste0(title))}
 
 t1001<- left_join(files, NUTS_2021) %>% # join with the NUTS
   filter(table_identifier == "T1001" &
@@ -801,37 +714,39 @@ t1001<- left_join(files, NUTS_2021) %>% # join with the NUTS
   ungroup() %>% 
   na.omit()
 
-plot_heatmap_t1001("B1G","Value Added NUTS 2")
+chart_1001_gg<- function(sto_sel,title){
+temp<- t1001 %>% 
+  filter(sto==sto_sel)
+
+  gg<-ggplot(temp, aes(x = time_period,y = fct_rev(ref_area),fill=change))+    
+  geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",change), data_id = ref_area))+
+  theme_regacc_heatmap+
+    theme(axis.text.x = element_text(size =9,angle = 90),
+          panel.grid.major = element_blank())+
+    scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
+      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
+      scale_y_discrete(expand=c(0,0))+
+  labs(title=paste0(title))
+
+ x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
+               
+  return(x)}
+
+chart_1001_gg("B1G","Value Added NUTS 2")
 ```
 
-<span style="background-color: #FFCC00">
 
+<div class="alert alert-info">
 As for the extra regio the amounts are small, growth rates and revisions in percentages are quite big and therefore the extra regio is not included in the charts to avoid distortions in the scales.
+</div>
 
-<span>
 
+The other tables show the share of the regions in the country.
 
-while the other tables show the share of the regions in the country.
-
-```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=7.5, fig.width=12}
-plot_heatmap_t1200<- function(x, y, title){
-     t1200 %>%
-    filter(sto == x ) %>%  
-      select(ref_area,NUTS, sto, activity, time_period, obs_value ) %>% 
-      group_by(time_period, sto, activity) %>%
-      mutate(share = round(obs_value*100 / obs_value[NUTS =="0"],1)) %>% 
-      ungroup() %>% 
-      filter(NUTS == y) %>% 
-      na.omit() %>% 
-    ggplot(aes(time_period, fct_rev(ref_area), fill = share)) +
-    geom_tile(aes(text=paste("ref_area:",ref_area,"\n","share:",share,"\n","time_period:",time_period))) +
-    facet_wrap(~activity)+ 
-    theme_regacc_heatmap+
-    theme(axis.text.x = element_text(size =9,angle = 90))+
-      scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
-      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
-          ggtitle(paste0(title))}
-
+```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=12, fig.width=14}
 t1200 <- left_join(files,NUTS_2021) %>% 
   filter(type =="T" &
 		 table_identifier =="T1200" &
@@ -840,7 +755,36 @@ t1200 <- left_join(files,NUTS_2021) %>%
           sto %in% c ("B1G","EMP","SAL","POP")) %>% 
     mutate(ref_area=paste0(ref_area,"-",label))
 
-plot_heatmap_t1200("B1G","3","Value Added NUTS 3")
+chart_1200_gg<- function(sto_sel,NUTS_sel,title){
+temp<- t1200 %>% 
+  filter(sto==sto_sel) %>% 
+   select(ref_area,NUTS, sto, activity, time_period, obs_value ) %>% 
+      group_by(time_period, sto, activity) %>%
+      mutate(share = round(obs_value*100 / obs_value[NUTS =="0"],1)) %>% 
+      ungroup() %>% 
+      filter(NUTS == NUTS_sel) %>% 
+      na.omit() 
+
+  gg<-ggplot(temp, aes(x = time_period,y = fct_rev(ref_area),fill=share))+    
+  geom_tile_interactive(aes(tooltip = paste0(ref_area,"\n", time_period, "\n",share), data_id = ref_area))+
+     facet_wrap_interactive(ncol = 3,vars(activity),
+  labeller = labeller_interactive(aes(tooltip = paste("Activity:", activity))))+
+  theme_regacc_heatmap+
+    theme(axis.text.x = element_text(size =9,angle = 90),
+          panel.grid.major = element_blank())+
+    scale_fill_gradient(low="#FFCC00", high="#0E47CB") +
+      scale_x_continuous(breaks=scales::breaks_pretty(n=3), labels = label_number(accuracy = 1),expand=c(0,0))+
+      scale_y_discrete(expand=c(0,0))+
+  labs(title=paste0(title))
+
+ x <- girafe(ggobj = gg, width_svg = 12, height_svg = 12,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
+               
+  return(x)}
+
+chart_1200_gg("B1G","3","Value Added NUTS 3")
 ```
 
 ### Revisions
@@ -860,19 +804,26 @@ temp<- rev %>%
   filter(NUTS %in% c("0","2","3") & sto %in% c("EMP","SAL","POP","B1G") &
            activity %in% c("_T","_Z") & !unit_measure %in% c("PC","HW"))
 
-plot_scatter <- function(title) {
-          temp %>% 
-           ggplot(aes(rev,revp,color=NUTS))+
-           geom_point(aes(text=paste("ref_area:",ref_area,"\n","rev:",rev,"\n","revp:",revp,"\n","time_period:",time_period)))+
-           facet_wrap(~sto, scales="free")+
+ plot_scatter <- function(title) {
+          p<- ggplot(temp, aes(rev,revp,color=NUTS))+
+           geom_point_interactive(aes(tooltip=paste("ref_area:",ref_area,"\n","rev:",rev,"\n","revp:",revp,"\n","time_period:",time_period)),size=3)+
            theme_regacc_scatter +
            scale_colour_manual(values= c("#0E47CB","#FFCC00","#AF155C"))+
            scale_y_continuous( breaks = breaks_pretty(3), labels = label_number())+
            scale_x_continuous( breaks = breaks_pretty(3), labels = label_number())+
+        facet_wrap_interactive(ncol = 3,scales="free",vars(sto),
+        labeller = labeller_interactive(aes(tooltip = paste("Transaction:", sto))))+
+          theme(strip.text.x = element_text_interactive(),
+                strip.text.y = element_text_interactive())+
            ggtitle(title)
-  }
-
-plot_scatter("Revision T1200")
+          
+  girafe(ggobj = p, width_svg =8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")))
+ }
+ 
+ plot_scatter("")
 ```
 
 ### Outliers 
@@ -1029,6 +980,7 @@ df_charts <- temp %>%
                      ggtitle(paste0(.y))))
   
 for (i in seq_along(df_charts$plot)) print(df_charts$plot[[i]])
+  
 ```
 
 ### Labour Force Survey
@@ -1036,7 +988,10 @@ for (i in seq_along(df_charts$plot)) print(df_charts$plot[[i]])
 We usually give a quick look to compare the employment data provided to us to the one of the LFS. There should be a bit or a lot different depending on the regions. If they are the same it would be dig Also if the difference between the two series shows a recent jump we may investigate it.
 
 ```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=7, fig.width=10, fig.align='center'}
-emp_regacc <-list.files(path="data/csv",
+
+country_sel<- "DK"
+
+emp_regacc <-list.files(path= here("data","csv"),
                 pattern= glob2rx(paste0("*",country_sel,"*")),
                 full.names=TRUE) %>% 
   as_tibble() %>% 
@@ -1053,7 +1008,7 @@ emp_regacc <-list.files(path="data/csv",
   rename(regacc=obs_value) %>% 
   as.data.table()
 
-emp_lfs <- readRDS("data/eurobase/emp_lfs.rds") %>% 
+emp_lfs <- readRDS(here("data","eurobase","emp_lfs.rds")) %>% 
   rename(ref_area=geo,
          time_period=time)
 
@@ -1154,11 +1109,11 @@ walk(df_plots$plot,print)
 
 ## Visual help and analytical ratios
 
-A set of three shiny apps should help us in investigating further some specific topics (revisions, outliers, last year data) and get some information for some analytical ratios (combination of variables). A brief look at t1001 is recommended to check the plausibility of the latest year and to the indicators that will later show up in publications (D1 per hours worked and person, income per capita, productivity, etc).
+A set of three shiny apps should help us in investigating further some specific topics (revisions, outliers, last year data) and get some information for some analytical ratios (combination of variables). A brief look at t1001 is recommended to check the plausibility of the latest year and to the indicators that will later show up in publications (D1 per hour worked and person, income per capita, productivity, etc).
 
-It is recommended to use Chrome (or alternatively Firefox) and do not forget to stop the shiny app when finish. Do not forget to run first the code defining the function and only later run the function.
+It is recommended to use Chrome (or alternatively Firefox) and do not forget to stop the shiny app when finished. Do not forget to run first the code defining the function and only later run the function.
 
-This year we have introduced some improvements in the reactivity for the application with NUTS 3 data (t1002_1200) and a default scatterplot view show levels and growth rates that can help us with the outlier detection.
+This year we have introduced some improvements in the reactivity for the application with NUTS 3 data (t1002_1200) and a default scatterplot view show levels and growth rates that can help us in the outlier detection.
 
 ```{r, eval=FALSE}
 shiny_t1001 <- function(country_sel) {
@@ -1229,7 +1184,7 @@ We need to update an excel file with the results and store that file on the fame
 
 ## Data for consistency with Main aggregates
 
-Another script extracts data for EMP and B1G for the last four years and sends them to the NQR Fame domain in order to compare them with main aggregates.
+Another Matis script extracts data for EMP and B1G for the last four years and sends them to the NQR Fame domain in order to compare them with main aggregates.
 
 # Communications with countries
 
@@ -1247,7 +1202,7 @@ The best way to acquire the data for excel (if what we want to include does not 
 data<- fread("data/csv/regacc_DK_2022-11-17.csv")
 ```
 
-The charts should be preferably prepared using the `ra*` functions of `regacc`. A copy of the charts and the code for the charts should be kept in a working folder (no need to copy them on the server).
+The charts should be preferably extracted from the shiny apps or prepared using the `ra*` functions of `regacc`. A copy of the charts and the code for the charts should be kept in a working folder (no need to copy them on the server).
 
 In case we detect a problem with an indicator we should provide the underlying data that we have used to produce the indicator. The code to create the indicators is located at the very beginning of the shiny apps. For example, this is the code to calculate labour productivity in persons and hours.
 
@@ -1296,32 +1251,45 @@ will create an html file in `overview/`.
 ```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=7.5, fig.width=12, fig.align='center'}
 
 country_sel<- "DK"
-
 new<-read_parquet(here("data","denodo","all_primary.parquet")) %>% 
   filter(country==country_sel & activity %in% c("_T","_Z") & prices!="LR" & type=="V" & transformation !="A3") %>% 
   select(table_identifier,country,ref_area,NUTS,sto,prices,unit_measure,time_period,obs_value)
 
-prev<- eurobase %>% 
-  filter(country ==country_sel & activity %in% c("TOTAL","_Z")) %>% 
-  select(table,country,ref_area,NUTS,sto,unit_measure,time_period,obs_value) %>% 
-  mutate(NUTS=as.factor(NUTS))
-
 gdp_new<- new %>% 
   filter(sto=="B1GQ" & NUTS %in% c("0","2") & 
-          time_period>=2018 & unit_measure %in% c("PE_B6_R_B6_POP") & 
+          time_period>=2017 & unit_measure %in% c("PE_B6_R_B6_POP") & 
            table_identifier=="T1001_1200") %>% 
   select(ref_area,NUTS,time_period,obs_value) %>% 
-  mutate(obs_value=round_half_up(obs_value,0)) 
+  mutate(obs_value=round_half_up(obs_value,0),
+         time_period=as.integer(time_period)) %>% 
+  left_join(.,NUTS_2021)
 
 
-p<-ggplot(gdp_new,aes(obs_value,fct_reorder(ref_area,obs_value),colour=as.factor(time_period)))+
-   geom_point(size=3)+
+
+chart_gg<- function(data,title){
+  gg<-ggplot(data, aes(y = obs_value, x = time_period, 
+                         group = ref_area, colour=as.factor(NUTS),size=as.integer(NUTS))) +
+   geom_line_interactive(aes(tooltip = paste0(ref_area," - ", label), data_id = ref_area)) +
+    geom_point_interactive(aes(tooltip = obs_value, data_id = ref_area)) +
    theme_ra()+
-  scale_colour_ra()+
-  theme(panel.grid.major.y = element_blank())+
-    labs(title="GDP per capita in PPS as % of the EU average")
+   scale_colour_ra("primary")+
+    scale_size("line", range = c(2,1)) +
+   theme(panel.grid.major.y = element_blank(), 
+         legend.position = "none",
+         plot.title = element_text(color = "#0E47CB")) +
+   labs(title=paste0(title))
+ gg<-ra_logo(gg)
+ 
+ x <- girafe(ggobj = gg, width_svg = 8, height_svg = 6,
+             options = list(
+               opts_hover_inv(css = "opacity:0.1;"),
+               opts_hover(css = "stroke-width:2;")
+             ))
+ return(x)
+}
 
-ra_logo(p) 
+
+chart_gg(gdp_new,"GDP per capita in PPS as % of the EU average")
 ```
 
 # DG REGIO
@@ -1345,7 +1313,7 @@ The script `00-run.all` is used to select particular countries or all and will g
 
 The script `01-prepare_data`will create a new parquet file consolidating all tables in the file `data/new.parquet`. The script `02-internal_checks` will do some checks (NACE, NUTS, etc) and create a file in `output`.The following scripts will also produce a similar output for external consistency, revisions and flags. The thresholds are harcoded.
 
-We can also see visually some countries or tables with `chart_browser.R`. If we load all countries and tables the application will feel a bit heavy and we should be careful not to crash it doing too many changes in the selection because it uses some shiny reactivity to update the selection offered. For example to decide which regions to show as possible selection (we do not want to show 2000 regions) the following code is used:
+We can also see visually some countries or tables with `chart_browser.R`. If we load all countries and tables the application will feel a bit heavy and we should be careful not to crash it doing too many changes in the selection because it uses some shiny reactivity to update the selection offered. For example to decide which regions to show as possible selection (we do not want to show 2000 regions!) the following code is used:
 
 ```{r,eval=FALSE}
  regions <- reactive({
@@ -1473,3 +1441,24 @@ tm_fill("2021", popup.vars = c("ref_area","NAME_LATN","2021"), palette="viridis"
   tm_borders()
 
 ```
+
+# Technical Annex
+
+## Folder structure
+
+```{r,echo=FALSE}
+fs::dir_tree(here(),recurse = FALSE)
+```
+
+## Packages Used
+
+```{r,echo=FALSE}
+renv::dependencies() %>%
+  as_tibble() %>% 
+  select(Package) %>% 
+  unique() %>% 
+  filter(!Package %in% c("fs","renv")) %>% 
+  arrange(Package) %>% 
+  knitr::kable()
+```
+

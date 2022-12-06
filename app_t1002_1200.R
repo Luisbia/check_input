@@ -6,9 +6,8 @@
 
  library(rio)
  library(shiny)
- library(shinythemes)
+ library(bslib)
  library(tidyverse)
- library(plotly)
  library(rlang)
  library(DT)
  library(data.table)
@@ -201,7 +200,7 @@ df_data <- df
 
 
 # Shiny ui----
-ui <- fluidPage(theme = shinytheme("flatly"),
+ui <- fluidPage(theme=bs_theme(bg="#F3F6FC", primary = "#0E47CB", secondary ="#AF155C",fg= "#262B38", base_font = "Cambria"),
                 HTML('<meta name="viewport" content="width=1280">'),
                 
                 # Setting the relative size of the sidebar and the plot area:
@@ -743,7 +742,7 @@ server <- function(input, output) {
                 pageLength = 50,
                 autoFill = TRUE,
                 dom = "Blfrtip",
-                buttons = c("excel")
+                buttons = c("csv","excel","pdf")
               )
     )
   })

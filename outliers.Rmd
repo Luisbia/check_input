@@ -16,32 +16,32 @@ params:
 
 body, td {
    font-size: 16px;
-   font-family: Raleway;
+   font-family: Cambria;
 }
 code.r{
   font-size: 14px;
-  font-family: Raleway;
+  font-family: Cambria;
 }
 td {
     font-size: 12px;
-    font-family: Raleway;
+    font-family: Cambria;
 }
 h1, h2, h3, h4, h5, h6 {
    font-size: 20px;
-   font-family: Raleway;  
-  color: #AF155C;
+   font-family: Cambria;  
+  color: #0E47CB;
 }
 a {
-    font-family: Raleway;
-    color: #AF155C;
+    font-family: Cambria;
+    color: #0E47CB;
 }
 body { 
 background-color: #F3F6FC; 
 }
 .tocify .list-group-item {
  background-color: #F3F6FC; 
- font-family: Raleway;
- color: #AF155C;
+ font-family: Cambria;
+ color: #0E47CB;
  font-style:bold
 
 </style>
