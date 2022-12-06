@@ -1450,15 +1450,3 @@ tm_fill("2021", popup.vars = c("ref_area","NAME_LATN","2021"), palette="viridis"
 fs::dir_tree(here(),recurse = FALSE)
 ```
 
-## Packages Used
-
-```{r,echo=FALSE}
-renv::dependencies() %>%
-  as_tibble() %>% 
-  select(Package) %>% 
-  unique() %>% 
-  filter(!Package %in% c("fs","renv")) %>% 
-  arrange(Package) %>% 
-  knitr::kable()
-```
-
