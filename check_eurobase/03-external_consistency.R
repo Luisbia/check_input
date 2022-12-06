@@ -1,6 +1,5 @@
 # Comparison MA
 library(tidyverse)
-library(eurostat)
 library(openxlsx)
 
 nama <- fread("data/denodo/nama.csv") %>% 

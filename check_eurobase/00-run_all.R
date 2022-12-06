@@ -17,7 +17,7 @@ source("check_eurobase/04-revision.R") #3% limit by default
 source("check_eurobase/05-flags.R")
 
 
-country_sel <-c("AT","IT","FR","DE")
+country_sel <-c("DE")
  
 table_sel <- c("coe2","emphw2","gdp2","gdp3","pop3","gva3","gvagr2","emp3","coe2","gfcf2","emphw2","hh2")
 

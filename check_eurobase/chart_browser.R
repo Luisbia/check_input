@@ -1,7 +1,5 @@
 library(tidyverse)
 library(shiny)
-library(shinythemes)
-library(tidyverse)
 library(plotly)
 library(rlang)
 library(DT)
@@ -16,7 +14,7 @@ source("utils/theme_report.R")
 
 #reactlog_enable()
 
-df_new <- read_parquet("data/new.parquet") %>% 
+df_new <- read_parquet(here("check_eurobase","data","new.parquet")) %>% 
   select(-obs_status,-value,-date) %>% 
   filter(country %in% country_sel & table %in% table_sel) %>% 
   rename(new=obs_value) %>%
@@ -34,7 +32,7 @@ df <- full_join(df_prev,df_new) %>%
   mutate(rev=round(new-prev),
          revp=round(rev*100/prev,1)) %>% 
   mutate(NUTS=as.factor(NUTS)) %>% 
-  left_join(.,NUTS_2021) %>% 
+  left_join(.,dataregacc::NUTS_2021) %>% 
   filter(label != "Extra-regio") %>%
   mutate(label = paste0(ref_area, "-", label)) %>% 
   pivot_longer(cols=c(new,prev,rev,revp),
@@ -42,14 +40,11 @@ df <- full_join(df_prev,df_new) %>%
                values_to="obs_value")
 
 
-themes <- c("cerulean", "cosmo", "cyborg", "darkly", "flatly", "journal", "litera", "lumen",  "minty", "pulse", "sandstone", "simplex", "spacelab", "superhero", "united", "yeti")
-
-random_theme <- sample(themes, 1)
 
 
 # Shiny ui----
-ui <- fluidPage( # theme = shinytheme("flatly"),
-  theme = bs_theme(bootswatch = random_theme), # choose https://bootswatch.com/
+ui <- fluidPage(
+  theme = bs_theme(bg="#F3F6FC", primary = "#0E47CB", secondary ="#AF155C",fg= "#262B38", base_font = "Cambria"), # choose https://bootswatch.com/
   HTML('<meta name="viewport" content="width=1280">'),
 
   # Setting the relative size of the sidebar and the plot area:
@@ -278,9 +273,7 @@ ui <- fluidPage( # theme = shinytheme("flatly"),
 # Shiny server----
 
 server <- function(input, output, session) {
-  output$text <- renderText({
-    random_theme
-  })
+
   
   regions <- reactive({
     filter(df, country %in% input$country & NUTS %in% input$NUTS)
@@ -449,7 +442,7 @@ server <- function(input, output, session) {
         pageLength = 50,
         autoFill = TRUE,
         dom = "Blfrtip",
-        buttons = c("csv", "excel")
+        buttons = c("csv", "excel", "pdf")
       )
     )
   )
