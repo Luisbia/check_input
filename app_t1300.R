@@ -56,12 +56,12 @@ df <- merge (NUTS2021, df, by= c("ref_area","NUTS")) %>%
 
 
 # some ratios
-df[, per_capita := obs_value * 1000 / obs_value[sto == "POP"], by = list(ref_area, type, time_period)]
-df[, nat_per_capita := per_capita * 100 / per_capita[NUTS == "0"], by = list(type, sto, time_period)]
-df[, nat_share := obs_value * 100 / obs_value[NUTS == "0"], by = list(type, sto, time_period)]
-df[, b5n_share := obs_value * 100 / obs_value[sto == "B_B5N"], by = list(ref_area, type, time_period)]
-df[, d1_share := obs_value * 100 / obs_value[sto == "C_D1"], by = list(ref_area, type, time_period)]
-df[, time_mean := obs_value * 100 / mean(obs_value), by = list(ref_area, type, sto)]
+df[, per_capita := round(obs_value * 1000 / obs_value[sto == "POP"]), by = list(ref_area, type, time_period)]
+df[, nat_per_capita := round(per_capita * 100 / per_capita[NUTS == "0"],1), by = list(type, sto, time_period)]
+df[, nat_share := round(obs_value * 100 / obs_value[NUTS == "0"],1), by = list(type, sto, time_period)]
+df[, b5n_share := round(obs_value * 100 / obs_value[sto == "B_B5N"],1), by = list(ref_area, type, time_period)]
+df[, d1_share := round(obs_value * 100 / obs_value[sto == "C_D1"],1), by = list(ref_area, type, time_period)]
+df[, time_mean := round(obs_value * 100 / mean(obs_value),1), by = list(ref_area, type, sto)]
 
 df<- melt(df,measure.vars = c("obs_value", "per_capita", "nat_per_capita", "nat_share", "b5n_share","d1_share","time_mean"),
           variable.name = "unit_measure",
@@ -326,7 +326,7 @@ server <- function(input, output) {
     # Build  plot
     p <- ggplot(df_filter(), aes(time_period, obs_value, group=!!parse_expr(input$group),colour = !!parse_expr(input$colour),text=paste(label))) +
       geom_line_interactive(aes(tooltip= paste0(ref_area," - ",label,"\n",sto,"\n",type, "\n", unit_measure),data_id=ref_area),size = 0.8)+
-      geom_point_interactive(aes(tooltip=obs_value,data_id=ref_area))+
+      geom_point_interactive(aes(tooltip=paste0(obs_value,"\n",time_period),data_id=ref_area))+
       theme_regacc_line+
       scale_colour_luis()+
       scale_y_continuous(breaks = pretty_breaks(3), labels = label_number(),expand=c(0,0.4))+

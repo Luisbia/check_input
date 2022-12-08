@@ -142,13 +142,13 @@ df_plots <-  df %>%
   nest() 
 
 df_plots <- df_plots %>% 
-  mutate(plot = map2(data, ref_area, ~ ggplot(data = .x, aes(x = time_period, y = values,colour = series)))) +
+  mutate(plot = map2(data, ref_area, ~ ggplot(data = .x, aes(x = time_period, y = values,colour = series)) +
                        ggtitle(paste0("Geo:", .y)) +
                        geom_line(size = 0.7)+
                        theme_regacc_line+
                       scale_x_continuous( breaks = breaks_pretty(3), labels = label_number(),expand=c(0,0.2))+
                      scale_y_continuous( breaks = breaks_pretty(4), labels = label_number(),expand=c(0,0.2))+
-  scale_colour_manual(values=c("#0E47CB", "#FFCC00"))+
+                      scale_colour_manual(values=c("#0E47CB", "#FFCC00"))))
 
 walk(df_plots$plot,print)
 ```

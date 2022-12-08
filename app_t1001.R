@@ -332,7 +332,7 @@ server <- function(input, output) {
     # Build  plot
     p <- ggplot(df_filter(), aes(time_period, obs_value, group=!!parse_expr(input$group),colour = !!parse_expr(input$colour))) +
       geom_line_interactive(aes(tooltip= paste0(ref_area," - ",label,"\n",sto,"\n",type),data_id=ref_area),size = 0.8)+
-      geom_point_interactive(aes(tooltip=obs_value,data_id=ref_area))+
+      geom_point_interactive(aes(tooltip=paste0(obs_value,"\n",time_period),data_id=ref_area))+
       theme_regacc_line+
       scale_colour_luis()+
       scale_y_continuous(breaks = pretty_breaks(3), labels = label_number(),expand=c(0.2,0.4))+

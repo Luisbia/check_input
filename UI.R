@@ -6,7 +6,7 @@ library(regacc)
 library(here)
 check_packages()
 # select country
-country_sel<- "DK"
+country_sel<- "FI"
 
 # bring xml files (/DONE or /INPUT)----
 bring_files(folder_sel = "//fame4prod.cc.cec.eu.int/fame-estat/econ/REGACC/DONE",

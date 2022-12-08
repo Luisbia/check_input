@@ -9,7 +9,7 @@ output:
 editor_options: 
   chunk_output_type: console
 params:
-  report: DK
+  report: FI
 ---
 <style type="text/css">
 
@@ -132,7 +132,7 @@ df <- left_join(df, NUTS2021)
 
 
 ```{r}
-p <- ggplot(df, aes(time_period, reg_dem, label = label))+
+p <- ggplot(df, aes(time_period, reg_dem, group=ref_area,label = label))+
   geom_line(size = 0.7, colour= "#0E47CB")+
   facet_wrap(~NUTS, scales="free_y")+
   theme_regacc_line+
