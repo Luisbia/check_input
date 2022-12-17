@@ -5,14 +5,16 @@ library(dataregacc)
 library(regacc)
 library(here)
 check_packages()
+# synch scripts with server
+source("00_sync.R")
 # select country
-country_sel<- "FI"
+country_sel<- "PT"
 
 # bring xml files (/DONE or /INPUT)----
 bring_files(folder_sel = "//fame4prod.cc.cec.eu.int/fame-estat/econ/REGACC/DONE",
             country_sel = country_sel,
             folder_out = "data/xml",
-            time_min = "2022-10-01")
+            time_min = "2022-12-01")
 
 ### Add bring metadata (optional) ----
 bring_files(folder_sel = "U:/03_Regional Accounts/03D_Data Production/2022/metadata",
@@ -36,7 +38,9 @@ source("02_basic_checks.R")
 
 ### Report in html ----
 rmarkdown::render("03_report.Rmd", 
-                  params = list(report = country_sel),
+                  params = list(report = country_sel,
+                                width = 10,
+                                height = 10),
                   output_file = paste0("report/",
                                        country_sel,"_",
                                        format(Sys.time(),"%Y-%m-%d"),

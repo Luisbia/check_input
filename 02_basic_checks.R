@@ -153,8 +153,16 @@ if ("T1300" %in% unique(df_dt$table_identifier)){
       mutate(B_B6N_c=round(B_B5N + C_D61 +  C_D62 + C_D7 - D_D5  - D_D61 - D_D7, digits =0))}
   
   t1300<- t1300 %>% 
-    mutate(B_B6N_d = round(B_B6N_c - B_B6N, digits = 0)) %>% 
-    filter(if_any(ends_with("_d"), ~ abs(.x) > ths_int))}
+    mutate(B_B6N_d = round(B_B6N_c - B_B6N, digits = 0)) 
+  
+  if("B_B7N" %in% names(t1300)){
+    t1300<-t1300 %>% 
+      mutate(B_B7N_c = round(B_B6N + C_D63),
+             B_B7N_d= round(B_B7N - B_B7N_c))}
+
+  t1300<- t1300 %>% 
+    filter(if_any(ends_with("_d"), ~ abs(.x) > ths_int))
+  }
 
 #
 

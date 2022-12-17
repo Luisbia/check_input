@@ -8,9 +8,10 @@ output:
     toc_float: no
     fig_width:  10
     fig_height: 7
-    theme: cerulean
+    theme: readable
+    code_download: yes
 params:
-  report: DK
+  report: MT
 ---
 <style type="text/css">
 
@@ -143,15 +144,17 @@ if ("embargo_date" %in% colnames(data)){
       na.omit() %>% 
       unique() %>% 
       mutate(across(everything(as.factor))) %>% 
-      droplevels()}
+      droplevels()
 
+if (nrow(temp) > 0)
+  regacc::show_DT(temp)}
 ```
 
 ### Comments
 
 ```{r}
 # show comments in the files
-if ("comment_ts" %in% names(df)) {
+if ("comment_ts" %in% names(data)) {
     temp<- data %>% 
       select(country,table_identifier,comment_ts) %>% 
       filter(comment_ts!="xxx" & comment_ts!="") %>% 
@@ -159,7 +162,8 @@ if ("comment_ts" %in% names(df)) {
       unique() %>% 
       mutate(across(everything(as.factor))) %>% 
       droplevels()
-if (nrow(temp) > 0)
+    
+
   regacc::show_DT(temp) }
 ```
 
@@ -220,6 +224,22 @@ tem<- regacc::load_xml(folder =  "data/xml",
   mutate(type = "T") %>% 
   select(type,table_identifier,country,ref_area,NUTS,accounting_entry,sto,activity,unit_measure,time_period,obs_value) 
 
+gvagr<- tem %>% 
+  filter(unit_measure=="PC" & table_identifier=="T1001")
+
+lasty<- tem %>% 
+  filter(table_identifier=="T1001" & time_period== 2021 & unit_measure !="PC" & sto %in% c("POP","EMP","B1G"))
+
+prevy<- tem %>% 
+  filter(table_identifier=="T1200" & time_period< 2021 & NUTS!="3" & activity %in% c("_T","_Z") & sto %in% c("POP","EMP","B1G") ) %>% # remove GVA in PYP
+  mutate(table_identifier="T1001")
+
+no_t1001<- tem %>% 
+  filter(!table_identifier %in% c("T1001")) # correct in val
+
+tem <- bind_rows(gvagr, lasty, prevy,no_t1001)
+
+
 val<- dataregacc::validated %>% 
   filter(country==country_sel) %>% 
   mutate(type="V")
@@ -228,7 +248,7 @@ gvagr<- val %>%
   filter(unit_measure=="PC" & table_identifier=="T1001")
 
 lasty<- val %>% 
-  filter(table_identifier=="T1001" & time_period== 2020 & unit_measure !="PC")
+  filter(table_identifier=="T1001" & time_period== 2020 & unit_measure !="PC"& sto %in% c("POP","EMP","B1G"))
 
 prevy<- val %>% 
   filter(table_identifier=="T1200" & time_period< 2020 & NUTS!="3" & activity %in% c("_T","_Z") & sto %in% c("POP","EMP","B1G") ) %>% # remove GVA in PYP

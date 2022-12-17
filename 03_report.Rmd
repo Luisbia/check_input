@@ -14,7 +14,7 @@ output:
 editor_options: 
   chunk_output_type: console
 params:
-  report: DK
+  report: LT
   height: 8
   width: 8
 ---
@@ -386,7 +386,7 @@ plot_scatter("")
 temp<- rev %>% 
   filter(NUTS %in% c("0","2") & unit_measure == "PC")
 
-if (nrow(temp)>0)
+if (nrow(temp)>0){
 p<-  ggplot(temp,aes(T,V,color=NUTS,label=ref_area))+
            geom_point_interactive(aes(tooltip=paste("ref_area:",ref_area,"\n","T:",T,"\n","V:",V,"\n","time_period:",time_period)),size=3)+
            theme_regacc_scatter +
@@ -398,7 +398,7 @@ p<-  ggplot(temp,aes(T,V,color=NUTS,label=ref_area))+
 girafe(ggobj = p, width_svg = 8, height_svg = 6,
              options = list(
                opts_hover_inv(css = "opacity:0.1;"),
-               opts_hover(css = "stroke-width:2;")))
+               opts_hover(css = "stroke-width:2;")))}
 ```
 
 ###  Revisions Table 1200
